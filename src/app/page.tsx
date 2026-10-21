@@ -34,6 +34,7 @@ import {
   SocialAccount, 
   ContentItem, 
   PlatformId,
+  PostStatus,
   SystemNotification,
   SocialInteraction,
   JobApplication,
@@ -84,6 +85,7 @@ export default function DashboardPage() {
   // Modals & Drawers
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
   const [createPostOpen, setCreatePostOpen] = useState<boolean>(false);
+  const [createPostInitialDate, setCreatePostInitialDate] = useState<string | undefined>(undefined);
   const [selectedAccountForModal, setSelectedAccountForModal] = useState<SocialAccount | null>(null);
 
   // Publishing & Preview modals
@@ -201,6 +203,48 @@ export default function DashboardPage() {
     setContentItems((prev) =>
       prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
     );
+
+    if (updatedItem.status === 'scheduled' && updatedItem.scheduledFor) {
+      fetch('/api/social/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentItemId: updatedItem.id,
+          title: updatedItem.title,
+          body: updatedItem.body,
+          platform: updatedItem.platform,
+          scheduledFor: updatedItem.scheduledFor,
+        }),
+      }).catch((err) => console.error('Schedule sync error:', err));
+    }
+  };
+
+  const handleUpdateItemStatus = (itemId: string, newStatus: PostStatus, externalUrl?: string) => {
+    setContentItems((prev) =>
+      prev.map((item) => {
+        if (item.id === itemId) {
+          return {
+            ...item,
+            status: newStatus,
+            publishedAt: newStatus === 'published' ? new Date().toISOString() : item.publishedAt,
+            externalUrl: externalUrl || item.externalUrl,
+            scheduledFor: newStatus === 'draft' ? undefined : item.scheduledFor,
+          };
+        }
+        return item;
+      })
+    );
+
+    const targetItem = contentItems.find((i) => i.id === itemId);
+    const newNotif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      title: newStatus === 'published' ? 'Post Published' : 'Status Updated',
+      message: `"${(targetItem?.title || 'Post').slice(0, 30)}..." updated to ${newStatus.toUpperCase()}.`,
+      type: newStatus === 'published' ? 'success' : 'info',
+      timestamp: 'Just now',
+      read: false,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
   };
 
   const handleSaveNewPost = (newPostData: Omit<ContentItem, 'id' | 'createdAt'>) => {
@@ -211,11 +255,26 @@ export default function DashboardPage() {
     };
     setContentItems((prev) => [newItem, ...prev]);
 
+    // If scheduled, also register in backend queue with duplicate protection
+    if (newItem.status === 'scheduled' && newItem.scheduledFor) {
+      fetch('/api/social/schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contentItemId: newItem.id,
+          title: newItem.title,
+          body: newItem.body,
+          platform: newItem.platform,
+          scheduledFor: newItem.scheduledFor,
+        }),
+      }).catch((err) => console.error('Failed to sync scheduled queue:', err));
+    }
+
     // Create success notification
     const newNotif: SystemNotification = {
       id: `notif-${Date.now()}`,
-      title: newPostData.status === 'scheduled' ? 'Post Scheduled' : 'Draft Approved',
-      message: `"${newPostData.title.slice(0, 30)}..." saved to pipeline for ${newPostData.platform.toUpperCase()}.`,
+      title: newPostData.status === 'scheduled' ? 'Post Scheduled in Queue' : 'Draft Saved',
+      message: `"${newPostData.title.slice(0, 30)}..." ${newPostData.status === 'scheduled' ? 'queued with idempotency lock' : 'saved to pipeline'} for ${newPostData.platform.toUpperCase()}.`,
       type: 'success',
       timestamp: 'Just now',
       read: false,
@@ -459,7 +518,11 @@ export default function DashboardPage() {
             <CalendarView
               items={contentItems}
               onSelectItem={(item) => setPreviewItem(item)}
-              onOpenCreatePost={() => setCreatePostOpen(true)}
+              onOpenCreatePost={(date) => {
+                setCreatePostInitialDate(date);
+                setCreatePostOpen(true);
+              }}
+              onUpdateItemStatus={handleUpdateItemStatus}
             />
           )}
 
@@ -601,8 +664,12 @@ export default function DashboardPage() {
 
       <CreatePostModal
         isOpen={createPostOpen}
-        onClose={() => setCreatePostOpen(false)}
+        onClose={() => {
+          setCreatePostOpen(false);
+          setCreatePostInitialDate(undefined);
+        }}
         onSavePost={handleSaveNewPost}
+        initialScheduledDate={createPostInitialDate}
       />
 
       <PostPreviewModal
