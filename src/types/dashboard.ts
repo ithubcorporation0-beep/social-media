@@ -36,6 +36,24 @@ export interface ContentItem {
   retryCount?: number;
 }
 
+export interface SocialInteraction {
+  id: string;
+  platform: PlatformId;
+  authorName: string;
+  authorHandle: string;
+  authorAvatar?: string;
+  postTitle: string;
+  postSnippet: string;
+  commentText: string;
+  timestamp: string;
+  status: 'pending_reply' | 'replied' | 'ignored';
+  supportedByApi: boolean;
+  requiredPermission: string;
+  replyText?: string;
+  repliedAt?: string;
+  isDemo: boolean;
+}
+
 export interface SystemNotification {
   id: string;
   title: string;

@@ -1,4 +1,4 @@
-import { SocialAccount, ContentItem, SystemNotification } from '@/types/dashboard';
+import { SocialAccount, ContentItem, SystemNotification, SocialInteraction } from '@/types/dashboard';
 
 export const initialAccounts: SocialAccount[] = [
   {
@@ -135,6 +135,67 @@ export const initialContentItems: ContentItem[] = [
     charCount: 122,
     isDemo: true,
     errorMessage: 'X API v2: Write limit reached (17/24h on free tier). Retry scheduled automatically.',
+  },
+];
+
+export const initialInteractions: SocialInteraction[] = [
+  {
+    id: 'inter-1',
+    platform: 'linkedin',
+    authorName: 'Sarah Jenkins',
+    authorHandle: '@sjenkins_lead',
+    postTitle: '5 Lessons Transitioning to Full-Stack AI Development',
+    postSnippet: 'Transitioning to full-stack AI development taught me three critical lessons...',
+    commentText: 'Great writeup! Do you recommend enforcing Row-Level Security directly on PostgreSQL policies or in the middleware layer?',
+    timestamp: '25 mins ago',
+    status: 'pending_reply',
+    supportedByApi: true,
+    requiredPermission: 'w_member_social & r_organization_social',
+    isDemo: true,
+  },
+  {
+    id: 'inter-2',
+    platform: 'facebook',
+    authorName: 'David Chen',
+    authorHandle: '@dchen_dev',
+    postTitle: 'Announcing SocialHub AI Launch',
+    postSnippet: 'Managing social media and tracking job applications in one unified...',
+    commentText: 'Are you planning to open-source the server-side OAuth adapter for Next.js App Router?',
+    timestamp: '1 hour ago',
+    status: 'pending_reply',
+    supportedByApi: true,
+    requiredPermission: 'pages_read_engagement & pages_manage_posts',
+    isDemo: true,
+  },
+  {
+    id: 'inter-3',
+    platform: 'instagram',
+    authorName: 'Ayesha Malik',
+    authorHandle: '@ayesha.codes',
+    postTitle: 'Visual Architecture Breakdown',
+    postSnippet: 'A quick visual overview of how we isolate OAuth secrets...',
+    commentText: 'Bohot zabardast explanation! Next.js 16 mein token refresh ke liye best practice kiya hai?',
+    timestamp: '3 hours ago',
+    status: 'pending_reply',
+    supportedByApi: true,
+    requiredPermission: 'instagram_manage_comments',
+    isDemo: true,
+  },
+  {
+    id: 'inter-4',
+    platform: 'youtube',
+    authorName: 'Marcus Wright',
+    authorHandle: '@marcus_builds',
+    postTitle: 'Building Production Web Apps',
+    postSnippet: 'Quick video walk-through demonstrating zero-leak secret handling...',
+    commentText: 'Clear and concise. Subscribed! Could you do a follow-up on Adzuna API job pagination?',
+    timestamp: '5 hours ago',
+    status: 'replied',
+    replyText: 'Thanks Marcus! Yes, we have an upcoming deep dive specifically covering job pagination and search filters.',
+    repliedAt: '4 hours ago',
+    supportedByApi: true,
+    requiredPermission: 'youtube.force-ssl',
+    isDemo: true,
   },
 ];
 

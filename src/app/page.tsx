@@ -14,16 +14,19 @@ import CalendarView from '@/components/calendar/CalendarView';
 import PostPreviewModal from '@/components/publishing/PostPreviewModal';
 import PublishConfirmModal from '@/components/publishing/PublishConfirmModal';
 import EditPostModal from '@/components/publishing/EditPostModal';
+import EngagementHub from '@/components/engagement/EngagementHub';
 import { 
   initialAccounts, 
   initialContentItems, 
-  initialNotifications 
+  initialNotifications,
+  initialInteractions 
 } from '@/data/mockDashboardData';
 import { 
   SocialAccount, 
   ContentItem, 
   PlatformId,
-  SystemNotification
+  SystemNotification,
+  SocialInteraction
 } from '@/types/dashboard';
 import { 
   FileText, 
@@ -34,7 +37,8 @@ import {
   Briefcase, 
   KeyRound, 
   ExternalLink,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  MessageSquare
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -48,6 +52,7 @@ export default function DashboardPage() {
   const [accounts, setAccounts] = useState<SocialAccount[]>(initialAccounts);
   const [contentItems, setContentItems] = useState<ContentItem[]>(initialContentItems);
   const [notifications, setNotifications] = useState<SystemNotification[]>(initialNotifications);
+  const [interactions, setInteractions] = useState<SocialInteraction[]>(initialInteractions);
 
   // Modals & Drawers
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
@@ -63,6 +68,7 @@ export default function DashboardPage() {
   const draftsCount = contentItems.filter((i) => i.status === 'draft').length;
   const scheduledCount = contentItems.filter((i) => i.status === 'scheduled').length;
   const publishedCount = contentItems.filter((i) => i.status === 'published').length;
+  const pendingEngagementCount = interactions.filter((i) => i.status === 'pending_reply').length;
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
   // Handlers
@@ -144,9 +150,37 @@ export default function DashboardPage() {
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
+  const handleSendReply = (interactionId: string, replyText: string) => {
+    setInteractions((prev) =>
+      prev.map((item) => {
+        if (item.id === interactionId) {
+          return {
+            ...item,
+            status: 'replied',
+            replyText,
+            repliedAt: 'Just now',
+          };
+        }
+        return item;
+      })
+    );
+
+    const targetInteraction = interactions.find((i) => i.id === interactionId);
+    const newNotif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      title: 'Reply Dispatched with Approval',
+      message: `Sent reply to ${targetInteraction?.authorName || 'user'} on ${targetInteraction?.platform.toUpperCase()}.`,
+      type: 'success',
+      timestamp: 'Just now',
+      read: false,
+      platform: targetInteraction?.platform,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+  };
+
   const handleStudioSave = (item: Omit<ContentItem, 'id' | 'createdAt'>) => {
     handleSaveNewPost(item);
-    setActiveTab('calendar'); // Direct to calendar so user can see their post planned on the timeline!
+    setActiveTab('calendar');
   };
 
   const handleMarkAllNotificationsRead = () => {
@@ -168,6 +202,7 @@ export default function DashboardPage() {
         setMobileOpen={setMobileMenuOpen}
         draftsCount={draftsCount}
         scheduledCount={scheduledCount}
+        engagementCount={pendingEngagementCount}
       />
 
       {/* Main Content Area */}
@@ -214,15 +249,15 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('history')}
+              onClick={() => setActiveTab('engagement')}
               className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-                <span>Published</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <span>Interactions</span>
+                <MessageSquare className="w-4 h-4 text-purple-400" />
               </div>
-              <p className="text-2xl font-bold text-white font-mono">{publishedCount}</p>
-              <p className="text-[11px] text-emerald-400">Live on platforms</p>
+              <p className="text-2xl font-bold text-white font-mono">{pendingEngagementCount}</p>
+              <p className="text-[11px] text-purple-300">Awaiting Reply</p>
             </button>
 
             <button
@@ -276,6 +311,13 @@ export default function DashboardPage() {
               items={contentItems}
               onSelectItem={(item) => setPreviewItem(item)}
               onOpenCreatePost={() => setCreatePostOpen(true)}
+            />
+          )}
+
+          {activeTab === 'engagement' && (
+            <EngagementHub
+              interactions={interactions}
+              onSendReply={handleSendReply}
             />
           )}
 

@@ -12,6 +12,7 @@ import {
   ShieldCheck, 
   ChevronRight,
   Layers,
+  MessageSquare,
   X
 } from 'lucide-react';
 
@@ -22,6 +23,7 @@ interface SidebarProps {
   setMobileOpen: (open: boolean) => void;
   draftsCount: number;
   scheduledCount: number;
+  engagementCount?: number;
 }
 
 export default function Sidebar({
@@ -31,11 +33,13 @@ export default function Sidebar({
   setMobileOpen,
   draftsCount,
   scheduledCount,
+  engagementCount = 3,
 }: SidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
     { id: 'studio', label: 'AI Content Studio', icon: Sparkles, badge: 'AI' },
     { id: 'calendar', label: 'Publishing Calendar', icon: Calendar, badge: 'Timeline' },
+    { id: 'engagement', label: 'Engagement & Replies', icon: MessageSquare, count: engagementCount },
     { id: 'content', label: 'Drafts & Pipeline', icon: Layers, count: draftsCount + scheduledCount },
     { id: 'history', label: 'Publishing History', icon: History },
     { id: 'jobs', label: 'Job Tracker', icon: Briefcase, badge: 'Adzuna' },
