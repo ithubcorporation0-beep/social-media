@@ -15,7 +15,8 @@ import {
   Copy,
   Check,
   Bug,
-  Sparkles
+  Sparkles,
+  Briefcase
 } from 'lucide-react';
 
 interface ConnectAccountModalProps {
@@ -36,36 +37,48 @@ export default function ConnectAccountModal({
   const [statusReport, setStatusReport] = useState<any>(null);
   const [testErrorResult, setTestErrorResult] = useState<string | null>(null);
 
-  // Fetch live backend status for LinkedIn when opened
+  // Fetch live backend status when opened
   useEffect(() => {
-    if (isOpen && account?.platform === 'linkedin') {
-      fetchStatus();
+    if (isOpen && account) {
+      if (account.platform === 'linkedin') {
+        fetchStatus('/api/auth/linkedin/status');
+      } else if (account.platform === 'facebook' || account.platform === 'instagram') {
+        fetchStatus('/api/auth/meta/status');
+      } else {
+        setStatusReport(null);
+        setTestErrorResult(null);
+      }
     } else {
       setStatusReport(null);
       setTestErrorResult(null);
     }
   }, [isOpen, account?.platform]);
 
-  const fetchStatus = async () => {
+  const fetchStatus = async (endpoint: string) => {
     try {
-      const res = await fetch('/api/auth/linkedin/status');
+      const res = await fetch(endpoint);
       if (res.ok) {
         const data = await res.json();
         setStatusReport(data);
       }
     } catch (e) {
-      console.error('Failed to fetch LinkedIn status:', e);
+      console.error('Failed to fetch status:', e);
     }
   };
 
   if (!isOpen || !account) return null;
 
   const isLinkedIn = account.platform === 'linkedin';
-  const isConnected = account.status === 'connected' || (isLinkedIn && statusReport?.connected);
+  const isMeta = account.platform === 'facebook' || account.platform === 'instagram';
+  const isAdzuna = account.platform === 'adzuna';
+  const isConnected = account.status === 'connected' || statusReport?.connected;
 
+  const originUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
   const redirectUri = isLinkedIn
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'}/api/auth/linkedin/callback`
-    : `http://localhost:3000/api/auth/callback/${account.platform}`;
+    ? `${originUrl}/api/auth/linkedin/callback`
+    : isMeta
+    ? `${originUrl}/api/auth/meta/callback`
+    : `${originUrl}/api/auth/callback/${account.platform}`;
 
   const handleCopyRedirectUri = () => {
     navigator.clipboard.writeText(redirectUri);
@@ -79,7 +92,6 @@ export default function ConnectAccountModal({
 
     try {
       if (isLinkedIn) {
-        // Run sandbox/dev handshake or live OAuth
         const res = await fetch('/api/auth/linkedin/callback?code=sandbox_auth_code_handshake&format=json');
         const data = await res.json();
         
@@ -90,9 +102,23 @@ export default function ConnectAccountModal({
             name: data.account.name,
             expiresAt: data.account.tokenExpiresAt,
           });
-          await fetchStatus();
+          await fetchStatus('/api/auth/linkedin/status');
         } else {
           setTestErrorResult(data.error || 'OAuth connection failed.');
+        }
+      } else if (isMeta) {
+        const res = await fetch('/api/auth/meta/callback?code=sandbox_meta_code_handshake&format=json');
+        const data = await res.json();
+
+        if (data.success && data.account) {
+          onToggleConnection(account.id, {
+            status: 'connected',
+            handle: data.account.handle,
+            name: data.account.name,
+          });
+          await fetchStatus('/api/auth/meta/status');
+        } else {
+          setTestErrorResult(data.error || 'Meta connection failed.');
         }
       } else {
         // Toggle mock connection for other platforms
@@ -114,7 +140,14 @@ export default function ConnectAccountModal({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'disconnect' }),
         });
-        await fetchStatus();
+        await fetchStatus('/api/auth/linkedin/status');
+      } else if (isMeta) {
+        await fetch('/api/auth/meta/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'disconnect' }),
+        });
+        await fetchStatus('/api/auth/meta/status');
       }
       onToggleConnection(account.id, {
         status: 'disconnected',
@@ -158,6 +191,8 @@ export default function ConnectAccountModal({
             <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold ${
               isLinkedIn 
                 ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' 
+                : isMeta
+                ? 'bg-blue-600/10 border border-blue-600/20 text-blue-500'
                 : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
             }`}>
               <Key className="w-5 h-5" />
@@ -167,11 +202,9 @@ export default function ConnectAccountModal({
                 <h2 className="text-base font-bold text-white tracking-tight">
                   {account.name}
                 </h2>
-                {isLinkedIn && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    Phase 1 Verified
-                  </span>
-                )}
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  {isLinkedIn ? 'Phase 1 Active' : isMeta ? 'Phase 2 Ready' : 'Official API'}
+                </span>
               </div>
               <p className="text-xs text-slate-400">Official OAuth 2.0 Integration & Key Vault</p>
             </div>
@@ -184,8 +217,8 @@ export default function ConnectAccountModal({
           </button>
         </div>
 
-        {/* Status Callout if LinkedIn */}
-        {isLinkedIn && (
+        {/* Status Callout */}
+        {(isLinkedIn || isMeta) && (
           <div className="p-3.5 rounded-xl bg-slate-900/90 border border-white/10 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-300">Integration Status:</span>
@@ -213,7 +246,7 @@ export default function ConnectAccountModal({
                 <ShieldCheck className="w-4 h-4 text-indigo-400 shrink-0" />
                 <div>
                   <div className="text-[10px] text-slate-500 font-medium">Browser Leakage Protection</div>
-                  <div className="text-indigo-300 font-semibold">Zero Secrets in Bundle</div>
+                  <div className="text-indigo-300 font-semibold">Zero Secrets in Client</div>
                 </div>
               </div>
             </div>
@@ -226,6 +259,19 @@ export default function ConnectAccountModal({
                 </span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Indeed / Manual Workflow Policy Notice */}
+        {account.platform === 'adzuna' && (
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 space-y-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-amber-300">
+              <AlertTriangle className="w-4 h-4" />
+              <span>Indeed & Job Board Compliance Notice</span>
+            </div>
+            <p className="text-[11px] leading-relaxed text-amber-200/90">
+              Indeed does not provide public search or application submission APIs without enterprise ATS partnerships. Scraping Indeed violates their Terms of Service. SocialHub AI uses the official <strong>Adzuna API</strong> for live search and provides a safe personal tracker for external job links you manually save.
+            </p>
           </div>
         )}
 
@@ -313,7 +359,7 @@ export default function ConnectAccountModal({
             rel="noopener noreferrer"
             className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium transition-colors"
           >
-            <span>Open LinkedIn Developer Portal</span>
+            <span>Open Developer Portal</span>
             <ExternalLink className="w-3.5 h-3.5" />
           </a>
 
@@ -348,7 +394,7 @@ export default function ConnectAccountModal({
                 ) : (
                   <>
                     <Sparkles className="w-3.5 h-3.5" />
-                    <span>Connect with LinkedIn (OAuth 2.0)</span>
+                    <span>Connect Official OAuth</span>
                   </>
                 )}
               </button>
