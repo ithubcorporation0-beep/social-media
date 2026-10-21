@@ -7,6 +7,7 @@ export const PLATFORM_CHAR_LIMITS: Record<PlatformId, number> = {
   instagram: 2200,
   facebook: 63206,
   youtube: 5000,
+  tiktok: 2200,
   adzuna: 1000,
 };
 

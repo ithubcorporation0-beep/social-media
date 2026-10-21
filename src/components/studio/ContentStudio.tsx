@@ -96,6 +96,13 @@ export default function ContentStudio({ onSaveToPipeline }: ContentStudioProps) 
       requiresMedia: false,
       notice: 'Free tier permits write-only posting up to 280 characters with image links.',
     },
+    tiktok: {
+      charLimit: 2200,
+      allowImage: false,
+      allowVideo: true,
+      requiresMedia: true,
+      notice: 'TikTok Content Posting API requires an MP4 video file and developer audit approval.',
+    },
     adzuna: {
       charLimit: 1000,
       allowImage: false,

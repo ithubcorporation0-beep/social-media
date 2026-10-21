@@ -17,7 +17,8 @@ import {
   FacebookIcon,
   InstagramIcon,
   YouTubeIcon,
-  XTwitterIcon
+  XTwitterIcon,
+  TikTokIcon
 } from '@/components/icons/PlatformIcons';
 
 interface AccountStatusGridProps {
@@ -38,6 +39,8 @@ export default function AccountStatusGrid({ accounts, onConnectAccount }: Accoun
         return <YouTubeIcon className="w-5 h-5 text-red-500" />;
       case 'x':
         return <XTwitterIcon className="w-5 h-5 text-slate-800 dark:text-slate-200" />;
+      case 'tiktok':
+        return <TikTokIcon className="w-5 h-5 text-slate-900 dark:text-white" />;
       case 'adzuna':
         return <Briefcase className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />;
     }

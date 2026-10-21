@@ -47,6 +47,7 @@ export default function EditPostModal({
     instagram: 2200,
     youtube: 5000,
     x: 280,
+    tiktok: 2200,
     adzuna: 1000,
   };
 

@@ -1,4 +1,4 @@
-export type PlatformId = 'linkedin' | 'facebook' | 'instagram' | 'youtube' | 'x' | 'adzuna';
+export type PlatformId = 'linkedin' | 'facebook' | 'instagram' | 'youtube' | 'x' | 'tiktok' | 'adzuna';
 
 export interface SocialAccount {
   id: string;
