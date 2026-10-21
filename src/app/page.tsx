@@ -16,12 +16,16 @@ import PublishConfirmModal from '@/components/publishing/PublishConfirmModal';
 import EditPostModal from '@/components/publishing/EditPostModal';
 import EngagementHub from '@/components/engagement/EngagementHub';
 import JobTracker from '@/components/jobs/JobTracker';
+import AnalyticsReports from '@/components/analytics/AnalyticsReports';
+import AiProviderSettings from '@/components/settings/AiProviderSettings';
 import { 
   initialAccounts, 
   initialContentItems, 
   initialNotifications,
   initialInteractions,
-  initialJobApplications
+  initialJobApplications,
+  initialAnalyticsItems,
+  initialAiConfigs
 } from '@/data/mockDashboardData';
 import { 
   SocialAccount, 
@@ -29,7 +33,10 @@ import {
   PlatformId,
   SystemNotification,
   SocialInteraction,
-  JobApplication
+  JobApplication,
+  PostAnalyticsItem,
+  AiProviderConfig,
+  AiProviderId
 } from '@/types/dashboard';
 import { 
   FileText, 
@@ -57,6 +64,9 @@ export default function DashboardPage() {
   const [notifications, setNotifications] = useState<SystemNotification[]>(initialNotifications);
   const [interactions, setInteractions] = useState<SocialInteraction[]>(initialInteractions);
   const [jobApplications, setJobApplications] = useState<JobApplication[]>(initialJobApplications);
+  const [analyticsItems, setAnalyticsItems] = useState<PostAnalyticsItem[]>(initialAnalyticsItems);
+  const [aiConfigs, setAiConfigs] = useState<AiProviderConfig[]>(initialAiConfigs);
+  const [defaultAiProvider, setDefaultAiProvider] = useState<AiProviderId>('gemini');
 
   // Modals & Drawers
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
@@ -211,6 +221,10 @@ export default function DashboardPage() {
     setJobApplications((prev) => prev.filter((app) => app.id !== id));
   };
 
+  const handleUpdateAiConfig = (updated: AiProviderConfig) => {
+    setAiConfigs((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+  };
+
   const handleStudioSave = (item: Omit<ContentItem, 'id' | 'createdAt'>) => {
     handleSaveNewPost(item);
     setActiveTab('calendar');
@@ -319,7 +333,7 @@ export default function DashboardPage() {
               />
 
               {/* Performance Analytics (Real metrics notice) */}
-              <AnalyticsNotice />
+              <AnalyticsNotice onOpenFullReports={() => setActiveTab('analytics')} />
 
               {/* Content Pipeline Overview */}
               <ContentOverview
@@ -413,6 +427,13 @@ export default function DashboardPage() {
             />
           )}
 
+          {activeTab === 'analytics' && (
+            <AnalyticsReports
+              analyticsItems={analyticsItems}
+              accounts={accounts}
+            />
+          )}
+
           {activeTab === 'accounts' && (
             <AccountStatusGrid
               accounts={accounts}
@@ -421,68 +442,23 @@ export default function DashboardPage() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="glass-panel rounded-2xl p-8 border border-white/5 space-y-6">
-              <div className="flex items-center gap-3 border-b border-white/10 pb-5">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                  <KeyRound className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-white tracking-tight">AI Provider Settings</h2>
-                  <p className="text-xs text-slate-400">
-                    Configure Google Gemini, OpenAI, or Groq API keys. Keys are loaded from server-side environment variables.
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-5 rounded-xl bg-slate-900/80 border border-emerald-500/30 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm text-white">Google Gemini</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                      Recommended
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">
-                    Free tier: 15 RPM, 1M TPM on Gemini 1.5/2.0 Flash via Google AI Studio.
-                  </p>
-                  <div className="pt-2">
-                    <code className="text-[11px] font-mono text-slate-300 bg-slate-950 px-2 py-1 rounded block truncate">
-                      GEMINI_API_KEY=••••••••••••
-                    </code>
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm text-white">Groq Cloud</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                      Fast Llama 3
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">Ultra-fast inference for instant hook and caption drafting.</p>
-                  <div className="pt-2">
-                    <code className="text-[11px] font-mono text-slate-300 bg-slate-950 px-2 py-1 rounded block truncate">
-                      GROQ_API_KEY=••••••••••••
-                    </code>
-                  </div>
-                </div>
-
-                <div className="p-5 rounded-xl bg-slate-900/80 border border-white/5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-sm text-white">OpenAI</span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                      GPT-4o mini
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400">Standard pay-as-you-go model provider.</p>
-                  <div className="pt-2">
-                    <code className="text-[11px] font-mono text-slate-300 bg-slate-950 px-2 py-1 rounded block truncate">
-                      OPENAI_API_KEY=••••••••••••
-                    </code>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <AiProviderSettings
+              configs={aiConfigs}
+              defaultProvider={defaultAiProvider}
+              onSetDefaultProvider={(provider) => {
+                setDefaultAiProvider(provider);
+                const newNotif: SystemNotification = {
+                  id: `notif-${Date.now()}`,
+                  title: 'Default AI Engine Updated',
+                  message: `Active AI provider switched to ${provider.toUpperCase()}.`,
+                  type: 'info',
+                  timestamp: 'Just now',
+                  read: false,
+                };
+                setNotifications((prev) => [newNotif, ...prev]);
+              }}
+              onUpdateConfig={handleUpdateAiConfig}
+            />
           )}
         </main>
       </div>

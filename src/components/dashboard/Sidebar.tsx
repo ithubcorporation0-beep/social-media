@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Layers,
   MessageSquare,
+  BarChart3,
   X
 } from 'lucide-react';
 
@@ -45,6 +46,7 @@ export default function Sidebar({
     { id: 'content', label: 'Drafts & Pipeline', icon: Layers, count: draftsCount + scheduledCount },
     { id: 'history', label: 'Publishing History', icon: History },
     { id: 'jobs', label: 'Job Tracker', icon: Briefcase, count: jobsCount },
+    { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3, badge: 'Audited' },
     { id: 'accounts', label: 'Connected Accounts', icon: Share2 },
     { id: 'settings', label: 'AI Provider Settings', icon: Settings2 },
   ];

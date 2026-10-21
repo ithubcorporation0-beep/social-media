@@ -111,3 +111,34 @@ export interface AnalyticsSummary {
   lastUpdated?: string;
   notice: string;
 }
+
+export interface PostAnalyticsItem {
+  id: string;
+  postId: string;
+  postTitle: string;
+  platform: PlatformId;
+  publishedAt: string;
+  impressions: number | null;
+  reach: number | null;
+  likes: number | null;
+  comments: number | null;
+  clicks: number | null;
+  engagementRate: number | null;
+  status: 'verified_api' | 'partial_internal' | 'restricted_by_platform';
+  statusNote?: string;
+}
+
+export type AiProviderId = 'gemini' | 'openai' | 'groq';
+
+export interface AiProviderConfig {
+  id: AiProviderId;
+  name: string;
+  description: string;
+  defaultModel: string;
+  availableModels: string[];
+  isConfiguredInEnv: boolean;
+  status: 'configured' | 'unconfigured' | 'testing' | 'verified' | 'error';
+  lastTestedAt?: string;
+  latencyMs?: number;
+  errorMessage?: string;
+}

@@ -12,7 +12,11 @@ import {
   Lock
 } from 'lucide-react';
 
-export default function AnalyticsNotice() {
+interface AnalyticsNoticeProps {
+  onOpenFullReports?: () => void;
+}
+
+export default function AnalyticsNotice({ onOpenFullReports }: AnalyticsNoticeProps) {
   const [showDemoPreview, setShowDemoPreview] = useState(false);
 
   return (
@@ -36,13 +40,23 @@ export default function AnalyticsNotice() {
           </div>
         </div>
 
-        {/* Toggle to preview schema */}
-        <button
-          onClick={() => setShowDemoPreview(!showDemoPreview)}
-          className="text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors self-start sm:self-auto"
-        >
-          {showDemoPreview ? 'Hide Demo Layout' : 'Preview Layout (Demo Schema)'}
-        </button>
+        {/* Buttons */}
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          {onOpenFullReports && (
+            <button
+              onClick={onOpenFullReports}
+              className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition-all cursor-pointer"
+            >
+              Open Full Reports
+            </button>
+          )}
+          <button
+            onClick={() => setShowDemoPreview(!showDemoPreview)}
+            className="text-xs px-3 py-1.5 rounded-xl bg-slate-900 border border-white/10 text-slate-300 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+          >
+            {showDemoPreview ? 'Hide Demo Layout' : 'Preview Layout'}
+          </button>
+        </div>
       </div>
 
       {!showDemoPreview ? (
