@@ -121,7 +121,10 @@ export async function GET(req: Request) {
       provider: 'Adzuna Sample Sandbox Feed',
       notice: 'Configure ADZUNA_APP_ID & ADZUNA_APP_KEY in .env for unlimited live global search.',
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error?.digest === 'NEXT_PRERENDER_INTERRUPTED') {
+      throw error;
+    }
     console.error('Job search API error:', error);
     return NextResponse.json(
       { error: 'Failed to search job listings.' },

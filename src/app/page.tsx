@@ -110,11 +110,76 @@ export default function DashboardPage() {
   const pendingEngagementCount = interactions.filter((i) => i.status === 'pending_reply').length;
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
+  // Check LinkedIn backend status on mount & handle OAuth callback redirects
+  useEffect(() => {
+    async function checkLinkedInSync() {
+      try {
+        const res = await fetch('/api/auth/linkedin/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connected && data.account) {
+            setAccounts((prev) =>
+              prev.map((acc) =>
+                acc.platform === 'linkedin'
+                  ? {
+                      ...acc,
+                      status: 'connected',
+                      name: data.account.name || acc.name,
+                      handle: data.account.handle || acc.handle,
+                      connectedAt: data.account.connectedAt,
+                      expiresAt: data.account.expiresAt,
+                    }
+                  : acc
+              )
+            );
+          }
+        }
+      } catch (e) {
+        console.error('LinkedIn sync check error:', e);
+      }
+
+      // Check URL search params for OAuth callback return
+      if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('linkedin_connected') === 'success') {
+          const newNotif: SystemNotification = {
+            id: `notif-${Date.now()}`,
+            title: 'LinkedIn Connected',
+            message: 'Official OAuth 2.0 handshake verified. Token encrypted at rest with AES-256-GCM in server vault.',
+            type: 'success',
+            timestamp: 'Just now',
+            read: false,
+            platform: 'linkedin',
+          };
+          setNotifications((prev) => [newNotif, ...prev]);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('linkedin_error')) {
+          const err = urlParams.get('linkedin_error');
+          const newNotif: SystemNotification = {
+            id: `notif-${Date.now()}`,
+            title: 'LinkedIn Connection Failed',
+            message: `OAuth authorization returned error: ${err}`,
+            type: 'error',
+            timestamp: 'Just now',
+            read: false,
+            platform: 'linkedin',
+          };
+          setNotifications((prev) => [newNotif, ...prev]);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+    }
+    checkLinkedInSync();
+  }, []);
+
   // Handlers
-  const handleToggleAccountConnection = (accountId: string) => {
+  const handleToggleAccountConnection = (accountId: string, updatedData?: Partial<SocialAccount>) => {
     setAccounts((prev) =>
       prev.map((acc) => {
         if (acc.id === accountId) {
+          if (updatedData) {
+            return { ...acc, ...updatedData };
+          }
           const newStatus = acc.status === 'connected' ? 'disconnected' : 'connected';
           return {
             ...acc,
