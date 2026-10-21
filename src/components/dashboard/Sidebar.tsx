@@ -11,6 +11,7 @@ import {
   Settings2, 
   ShieldCheck, 
   ChevronRight,
+  Layers,
   X
 } from 'lucide-react';
 
@@ -34,7 +35,8 @@ export default function Sidebar({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
     { id: 'studio', label: 'AI Content Studio', icon: Sparkles, badge: 'AI' },
-    { id: 'content', label: 'Drafts & Scheduled', icon: Calendar, count: draftsCount + scheduledCount },
+    { id: 'calendar', label: 'Publishing Calendar', icon: Calendar, badge: 'Timeline' },
+    { id: 'content', label: 'Drafts & Pipeline', icon: Layers, count: draftsCount + scheduledCount },
     { id: 'history', label: 'Publishing History', icon: History },
     { id: 'jobs', label: 'Job Tracker', icon: Briefcase, badge: 'Adzuna' },
     { id: 'accounts', label: 'Connected Accounts', icon: Share2 },
@@ -154,7 +156,7 @@ export default function Sidebar({
         {/* User Profile Footer */}
         <div className="p-4 border-t border-white/5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 border border-white/10 flex items-center justify-center font-semibold text-sm text-white">
-            JD
+            DO
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-white truncate">Demo Operator</p>

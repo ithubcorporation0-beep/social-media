@@ -10,6 +10,10 @@ import NotificationDrawer from '@/components/dashboard/NotificationDrawer';
 import ConnectAccountModal from '@/components/dashboard/ConnectAccountModal';
 import CreatePostModal from '@/components/dashboard/CreatePostModal';
 import ContentStudio from '@/components/studio/ContentStudio';
+import CalendarView from '@/components/calendar/CalendarView';
+import PostPreviewModal from '@/components/publishing/PostPreviewModal';
+import PublishConfirmModal from '@/components/publishing/PublishConfirmModal';
+import EditPostModal from '@/components/publishing/EditPostModal';
 import { 
   initialAccounts, 
   initialContentItems, 
@@ -29,7 +33,8 @@ import {
   Sparkles, 
   Briefcase, 
   KeyRound, 
-  ExternalLink 
+  ExternalLink,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -48,6 +53,11 @@ export default function DashboardPage() {
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
   const [createPostOpen, setCreatePostOpen] = useState<boolean>(false);
   const [selectedAccountForModal, setSelectedAccountForModal] = useState<SocialAccount | null>(null);
+
+  // Publishing & Preview modals
+  const [previewItem, setPreviewItem] = useState<ContentItem | null>(null);
+  const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
+  const [confirmPublishItem, setConfirmPublishItem] = useState<ContentItem | null>(null);
 
   // Computed counts
   const draftsCount = contentItems.filter((i) => i.status === 'draft').length;
@@ -77,6 +87,12 @@ export default function DashboardPage() {
     setContentItems((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const handleUpdatePost = (updatedItem: ContentItem) => {
+    setContentItems((prev) =>
+      prev.map((item) => (item.id === updatedItem.id ? updatedItem : item))
+    );
+  };
+
   const handleSaveNewPost = (newPostData: Omit<ContentItem, 'id' | 'createdAt'>) => {
     const newItem: ContentItem = {
       ...newPostData,
@@ -98,9 +114,39 @@ export default function DashboardPage() {
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
+  const handlePublishSuccess = (itemId: string, externalUrl?: string) => {
+    setContentItems((prev) =>
+      prev.map((item) => {
+        if (item.id === itemId) {
+          return {
+            ...item,
+            status: 'published',
+            publishedAt: new Date().toISOString(),
+            externalUrl: externalUrl || item.externalUrl || 'https://linkedin.com/feed',
+            errorMessage: undefined,
+          };
+        }
+        return item;
+      })
+    );
+
+    // Notify user
+    const targetItem = contentItems.find((i) => i.id === itemId);
+    const newNotif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      title: 'Post Published Successfully',
+      message: `"${(targetItem?.title || 'Post').slice(0, 30)}..." published live to official API.`,
+      type: 'success',
+      timestamp: 'Just now',
+      read: false,
+      platform: targetItem?.platform,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+  };
+
   const handleStudioSave = (item: Omit<ContentItem, 'id' | 'createdAt'>) => {
     handleSaveNewPost(item);
-    setActiveTab('content'); // Navigate to drafts & scheduled to see the newly approved post!
+    setActiveTab('calendar'); // Direct to calendar so user can see their post planned on the timeline!
   };
 
   const handleMarkAllNotificationsRead = () => {
@@ -156,7 +202,7 @@ export default function DashboardPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('content')}
+              onClick={() => setActiveTab('calendar')}
               className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
             >
               <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
@@ -164,7 +210,7 @@ export default function DashboardPage() {
                 <Clock className="w-4 h-4 text-amber-400" />
               </div>
               <p className="text-2xl font-bold text-white font-mono">{scheduledCount}</p>
-              <p className="text-[11px] text-amber-400">Queued for publishing</p>
+              <p className="text-[11px] text-amber-400">View in Calendar</p>
             </button>
 
             <button
@@ -214,6 +260,9 @@ export default function DashboardPage() {
                 onDeleteItem={handleDeleteItem}
                 onOpenCreatePost={() => setCreatePostOpen(true)}
                 onClearFilters={handleClearFilters}
+                onPreviewItem={(item) => setPreviewItem(item)}
+                onEditItem={(item) => setEditingItem(item)}
+                onRequestPublish={(item) => setConfirmPublishItem(item)}
               />
             </>
           )}
@@ -222,12 +271,20 @@ export default function DashboardPage() {
             <ContentStudio onSaveToPipeline={handleStudioSave} />
           )}
 
+          {activeTab === 'calendar' && (
+            <CalendarView
+              items={contentItems}
+              onSelectItem={(item) => setPreviewItem(item)}
+              onOpenCreatePost={() => setCreatePostOpen(true)}
+            />
+          )}
+
           {activeTab === 'content' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Drafts & Scheduled Queue</h2>
-                  <p className="text-xs text-slate-400">Review, edit, or dispatch pending social posts</p>
+                  <h2 className="text-lg font-bold text-white">Drafts & Scheduled Pipeline</h2>
+                  <p className="text-xs text-slate-400">Review feed mockups, edit text, or dispatch scheduled jobs</p>
                 </div>
                 <button
                   onClick={() => setActiveTab('studio')}
@@ -244,6 +301,9 @@ export default function DashboardPage() {
                 onDeleteItem={handleDeleteItem}
                 onOpenCreatePost={() => setCreatePostOpen(true)}
                 onClearFilters={handleClearFilters}
+                onPreviewItem={(item) => setPreviewItem(item)}
+                onEditItem={(item) => setEditingItem(item)}
+                onRequestPublish={(item) => setConfirmPublishItem(item)}
               />
             </div>
           )}
@@ -261,6 +321,9 @@ export default function DashboardPage() {
                 onDeleteItem={handleDeleteItem}
                 onOpenCreatePost={() => setCreatePostOpen(true)}
                 onClearFilters={handleClearFilters}
+                onPreviewItem={(item) => setPreviewItem(item)}
+                onEditItem={(item) => setEditingItem(item)}
+                onRequestPublish={(item) => setConfirmPublishItem(item)}
               />
             </div>
           )}
@@ -429,6 +492,30 @@ export default function DashboardPage() {
         isOpen={createPostOpen}
         onClose={() => setCreatePostOpen(false)}
         onSavePost={handleSaveNewPost}
+      />
+
+      <PostPreviewModal
+        item={previewItem}
+        isOpen={!!previewItem}
+        onClose={() => setPreviewItem(null)}
+        onConfirmPublish={(item) => setConfirmPublishItem(item)}
+      />
+
+      <EditPostModal
+        item={editingItem}
+        isOpen={!!editingItem}
+        onClose={() => setEditingItem(null)}
+        onUpdatePost={handleUpdatePost}
+        onDeletePost={handleDeleteItem}
+        onPreviewPost={(item) => setPreviewItem(item)}
+      />
+
+      <PublishConfirmModal
+        item={confirmPublishItem}
+        account={accounts.find((a) => a.platform === confirmPublishItem?.platform)}
+        isOpen={!!confirmPublishItem}
+        onClose={() => setConfirmPublishItem(null)}
+        onPublishSuccess={handlePublishSuccess}
       />
     </div>
   );

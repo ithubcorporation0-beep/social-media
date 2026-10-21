@@ -30,6 +30,10 @@ export interface ContentItem {
   isDemo: boolean;
   externalUrl?: string;
   errorMessage?: string;
+  idempotencyKey?: string;
+  mediaType?: 'none' | 'image' | 'video';
+  mediaUrl?: string;
+  retryCount?: number;
 }
 
 export interface SystemNotification {

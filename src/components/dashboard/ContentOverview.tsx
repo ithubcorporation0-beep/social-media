@@ -14,11 +14,21 @@ import {
   Clock, 
   ExternalLink, 
   Trash2, 
-  Share2, 
   Search,
   Sparkles,
-  Layers
+  Layers,
+  Eye,
+  Send,
+  Edit3,
+  RotateCcw
 } from 'lucide-react';
+import {
+  LinkedInIcon,
+  FacebookIcon,
+  InstagramIcon,
+  YouTubeIcon,
+  XTwitterIcon
+} from '@/components/icons/PlatformIcons';
 
 interface ContentOverviewProps {
   items: ContentItem[];
@@ -27,6 +37,9 @@ interface ContentOverviewProps {
   onDeleteItem: (id: string) => void;
   onOpenCreatePost: () => void;
   onClearFilters: () => void;
+  onPreviewItem?: (item: ContentItem) => void;
+  onEditItem?: (item: ContentItem) => void;
+  onRequestPublish?: (item: ContentItem) => void;
 }
 
 export default function ContentOverview({
@@ -36,6 +49,9 @@ export default function ContentOverview({
   onDeleteItem,
   onOpenCreatePost,
   onClearFilters,
+  onPreviewItem,
+  onEditItem,
+  onRequestPublish,
 }: ContentOverviewProps) {
   const [activeFilter, setActiveFilter] = useState<'all' | 'draft' | 'scheduled' | 'published' | 'failed'>('all');
 
@@ -60,7 +76,7 @@ export default function ContentOverview({
     return true;
   });
 
-  const getStatusBadge = (status: PostStatus, item: ContentItem) => {
+  const getStatusBadge = (status: PostStatus) => {
     switch (status) {
       case 'draft':
         return (
@@ -74,6 +90,13 @@ export default function ContentOverview({
           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
             <Clock className="w-3 h-3 text-amber-400" />
             Scheduled
+          </span>
+        );
+      case 'publishing':
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 animate-pulse">
+            <Send className="w-3 h-3 text-indigo-400" />
+            Publishing...
           </span>
         );
       case 'published':
@@ -95,13 +118,24 @@ export default function ContentOverview({
     }
   };
 
+  const getPlatformIcon = (platform: PlatformId) => {
+    switch (platform) {
+      case 'linkedin': return <LinkedInIcon className="w-3.5 h-3.5 text-blue-400" />;
+      case 'facebook': return <FacebookIcon className="w-3.5 h-3.5 text-blue-500" />;
+      case 'instagram': return <InstagramIcon className="w-3.5 h-3.5 text-pink-400" />;
+      case 'youtube': return <YouTubeIcon className="w-3.5 h-3.5 text-red-500" />;
+      case 'x': return <XTwitterIcon className="w-3.5 h-3.5 text-slate-300" />;
+      default: return <FileText className="w-3.5 h-3.5 text-slate-400" />;
+    }
+  };
+
   const getPlatformLabel = (platform: PlatformId) => {
     switch (platform) {
       case 'linkedin': return 'LinkedIn';
       case 'facebook': return 'Facebook Page';
       case 'instagram': return 'Instagram';
       case 'youtube': return 'YouTube';
-      case 'x': return 'X (Twitter)';
+      case 'x': return 'X';
       case 'adzuna': return 'Adzuna';
     }
   };
@@ -116,7 +150,7 @@ export default function ContentOverview({
             <span>Content Pipeline & History</span>
           </h2>
           <p className="text-xs text-slate-400">
-            Manage drafts, review scheduled publishing jobs, and inspect publishing history.
+            Preview feed mockups, edit drafts, and dispatch posts with duplicate protection.
           </p>
         </div>
 
@@ -155,8 +189,9 @@ export default function ContentOverview({
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono">
-                      {getPlatformLabel(item.platform)}
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-mono flex items-center gap-1.5">
+                      {getPlatformIcon(item.platform)}
+                      <span>{getPlatformLabel(item.platform)}</span>
                     </span>
                     {item.isDemo && (
                       <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 font-mono">
@@ -164,7 +199,7 @@ export default function ContentOverview({
                       </span>
                     )}
                   </div>
-                  {getStatusBadge(item.status, item)}
+                  {getStatusBadge(item.status)}
                 </div>
 
                 <h3 className="font-semibold text-sm text-white line-clamp-1">{item.title}</h3>
@@ -176,7 +211,17 @@ export default function ContentOverview({
                 {item.errorMessage && (
                   <div className="p-2.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                    <span>{item.errorMessage}</span>
+                    <div className="flex-1">
+                      <span>{item.errorMessage}</span>
+                      {onRequestPublish && (
+                        <button
+                          onClick={() => onRequestPublish(item)}
+                          className="mt-1.5 text-[11px] text-rose-200 hover:underline font-bold flex items-center gap-1"
+                        >
+                          <RotateCcw className="w-3 h-3" /> Retry Dispatch
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
 
@@ -190,7 +235,7 @@ export default function ContentOverview({
                 </div>
               </div>
 
-              {/* Card Footer: Timestamp and Actions */}
+              {/* Card Footer: Timestamp and Action Buttons */}
               <div className="flex items-center justify-between gap-2 pt-3 border-t border-white/5 text-xs text-slate-400">
                 <div className="flex items-center gap-1 text-[11px]">
                   {item.scheduledFor ? (
@@ -211,7 +256,41 @@ export default function ContentOverview({
                   )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {/* Feed Mockup Preview Trigger */}
+                  {onPreviewItem && (
+                    <button
+                      onClick={() => onPreviewItem(item)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-300 hover:bg-indigo-500/10 transition-colors"
+                      title="Preview Social Feed Mockup"
+                    >
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Edit Post Trigger */}
+                  {onEditItem && (
+                    <button
+                      onClick={() => onEditItem(item)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors"
+                      title="Edit Post Content"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  {/* Publish Now Action (triggers confirmation modal) */}
+                  {onRequestPublish && item.status !== 'published' && (
+                    <button
+                      onClick={() => onRequestPublish(item)}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-[11px] shadow-sm flex items-center gap-1 transition-all"
+                      title="Publish to Platform"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>Publish</span>
+                    </button>
+                  )}
+
                   {item.externalUrl && (
                     <a
                       href={item.externalUrl}
