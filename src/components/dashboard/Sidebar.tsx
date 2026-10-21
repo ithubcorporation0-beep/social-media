@@ -48,6 +48,7 @@ export default function Sidebar({
     { id: 'jobs', label: 'Job Tracker', icon: Briefcase, count: jobsCount },
     { id: 'analytics', label: 'Analytics & Reports', icon: BarChart3, badge: 'Audited' },
     { id: 'accounts', label: 'Connected Accounts', icon: Share2 },
+    { id: 'security', label: 'Security & RLS Vault', icon: ShieldCheck, badge: 'Protected' },
     { id: 'settings', label: 'AI Provider Settings', icon: Settings2 },
   ];
 

@@ -18,6 +18,7 @@ import EngagementHub from '@/components/engagement/EngagementHub';
 import JobTracker from '@/components/jobs/JobTracker';
 import AnalyticsReports from '@/components/analytics/AnalyticsReports';
 import AiProviderSettings from '@/components/settings/AiProviderSettings';
+import SecurityCenter from '@/components/security/SecurityCenter';
 import { 
   initialAccounts, 
   initialContentItems, 
@@ -439,6 +440,10 @@ export default function DashboardPage() {
               accounts={accounts}
               onConnectAccount={(acc) => setSelectedAccountForModal(acc)}
             />
+          )}
+
+          {activeTab === 'security' && (
+            <SecurityCenter />
           )}
 
           {activeTab === 'settings' && (
