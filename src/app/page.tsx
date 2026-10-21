@@ -9,6 +9,7 @@ import AnalyticsNotice from '@/components/dashboard/AnalyticsNotice';
 import NotificationDrawer from '@/components/dashboard/NotificationDrawer';
 import ConnectAccountModal from '@/components/dashboard/ConnectAccountModal';
 import CreatePostModal from '@/components/dashboard/CreatePostModal';
+import ContentStudio from '@/components/studio/ContentStudio';
 import { 
   initialAccounts, 
   initialContentItems, 
@@ -17,7 +18,8 @@ import {
 import { 
   SocialAccount, 
   ContentItem, 
-  PlatformId 
+  PlatformId,
+  SystemNotification
 } from '@/types/dashboard';
 import { 
   FileText, 
@@ -27,9 +29,7 @@ import {
   Sparkles, 
   Briefcase, 
   KeyRound, 
-  ExternalLink,
-  ShieldAlert,
-  ArrowRight
+  ExternalLink 
 } from 'lucide-react';
 
 export default function DashboardPage() {
@@ -42,7 +42,7 @@ export default function DashboardPage() {
   // Data States
   const [accounts, setAccounts] = useState<SocialAccount[]>(initialAccounts);
   const [contentItems, setContentItems] = useState<ContentItem[]>(initialContentItems);
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const [notifications, setNotifications] = useState<SystemNotification[]>(initialNotifications);
 
   // Modals & Drawers
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
@@ -84,6 +84,23 @@ export default function DashboardPage() {
       createdAt: new Date().toISOString(),
     };
     setContentItems((prev) => [newItem, ...prev]);
+
+    // Create success notification
+    const newNotif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      title: newPostData.status === 'scheduled' ? 'Post Scheduled' : 'Draft Approved',
+      message: `"${newPostData.title.slice(0, 30)}..." saved to pipeline for ${newPostData.platform.toUpperCase()}.`,
+      type: 'success',
+      timestamp: 'Just now',
+      read: false,
+      platform: newPostData.platform,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+  };
+
+  const handleStudioSave = (item: Omit<ContentItem, 'id' | 'createdAt'>) => {
+    handleSaveNewPost(item);
+    setActiveTab('content'); // Navigate to drafts & scheduled to see the newly approved post!
   };
 
   const handleMarkAllNotificationsRead = () => {
@@ -126,34 +143,46 @@ export default function DashboardPage() {
         <main className="flex-1 p-4 lg:p-8 space-y-8 max-w-7xl mx-auto w-full">
           {/* Top Quick Stats Ribbon */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1">
+            <button
+              onClick={() => setActiveTab('content')}
+              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+            >
               <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
                 <span>Active Drafts</span>
                 <FileText className="w-4 h-4 text-slate-400" />
               </div>
               <p className="text-2xl font-bold text-white font-mono">{draftsCount}</p>
               <p className="text-[11px] text-slate-400">Ready for review</p>
-            </div>
+            </button>
 
-            <div className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1">
+            <button
+              onClick={() => setActiveTab('content')}
+              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+            >
               <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
                 <span>Scheduled</span>
                 <Clock className="w-4 h-4 text-amber-400" />
               </div>
               <p className="text-2xl font-bold text-white font-mono">{scheduledCount}</p>
               <p className="text-[11px] text-amber-400">Queued for publishing</p>
-            </div>
+            </button>
 
-            <div className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1">
+            <button
+              onClick={() => setActiveTab('history')}
+              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+            >
               <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
                 <span>Published</span>
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               </div>
               <p className="text-2xl font-bold text-white font-mono">{publishedCount}</p>
               <p className="text-[11px] text-emerald-400">Live on platforms</p>
-            </div>
+            </button>
 
-            <div className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1">
+            <button
+              onClick={() => setActiveTab('accounts')}
+              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+            >
               <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
                 <span>Connected APIs</span>
                 <Share2 className="w-4 h-4 text-indigo-400" />
@@ -162,7 +191,7 @@ export default function DashboardPage() {
                 {accounts.filter((a) => a.status === 'connected').length} / {accounts.length}
               </p>
               <p className="text-[11px] text-indigo-400 font-medium">Official OAuth 2.0</p>
-            </div>
+            </button>
           </div>
 
           {/* Conditional Sub-View Routing */}
@@ -190,45 +219,50 @@ export default function DashboardPage() {
           )}
 
           {activeTab === 'studio' && (
-            <div className="glass-panel rounded-2xl p-8 border border-white/5 text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white mx-auto shadow-lg shadow-indigo-500/25">
-                <Sparkles className="w-7 h-7" />
-              </div>
-              <div className="max-w-md mx-auto space-y-2">
-                <h2 className="text-xl font-bold text-white tracking-tight">AI Content Studio</h2>
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  Generate platform-tailored hooks, hashtags, and multi-format drafts using Gemini, OpenAI, or Groq. Supports English and Roman Urdu tones.
-                </p>
-              </div>
-              <button
-                onClick={() => setCreatePostOpen(true)}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md shadow-indigo-600/20 hover:bg-indigo-500 transition-all"
-              >
-                Launch Studio Composer
-              </button>
-            </div>
+            <ContentStudio onSaveToPipeline={handleStudioSave} />
           )}
 
           {activeTab === 'content' && (
-            <ContentOverview
-              items={contentItems.filter((i) => i.status === 'draft' || i.status === 'scheduled')}
-              searchQuery={searchQuery}
-              selectedPlatform={selectedPlatform}
-              onDeleteItem={handleDeleteItem}
-              onOpenCreatePost={() => setCreatePostOpen(true)}
-              onClearFilters={handleClearFilters}
-            />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-white">Drafts & Scheduled Queue</h2>
+                  <p className="text-xs text-slate-400">Review, edit, or dispatch pending social posts</p>
+                </div>
+                <button
+                  onClick={() => setActiveTab('studio')}
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-600/20"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Open AI Studio</span>
+                </button>
+              </div>
+              <ContentOverview
+                items={contentItems.filter((i) => i.status === 'draft' || i.status === 'scheduled')}
+                searchQuery={searchQuery}
+                selectedPlatform={selectedPlatform}
+                onDeleteItem={handleDeleteItem}
+                onOpenCreatePost={() => setCreatePostOpen(true)}
+                onClearFilters={handleClearFilters}
+              />
+            </div>
           )}
 
           {activeTab === 'history' && (
-            <ContentOverview
-              items={contentItems.filter((i) => i.status === 'published' || i.status === 'failed')}
-              searchQuery={searchQuery}
-              selectedPlatform={selectedPlatform}
-              onDeleteItem={handleDeleteItem}
-              onOpenCreatePost={() => setCreatePostOpen(true)}
-              onClearFilters={handleClearFilters}
-            />
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-white">Publishing History & Audit Logs</h2>
+                <p className="text-xs text-slate-400">Verifiable delivery logs and API status responses</p>
+              </div>
+              <ContentOverview
+                items={contentItems.filter((i) => i.status === 'published' || i.status === 'failed')}
+                searchQuery={searchQuery}
+                selectedPlatform={selectedPlatform}
+                onDeleteItem={handleDeleteItem}
+                onOpenCreatePost={() => setCreatePostOpen(true)}
+                onClearFilters={handleClearFilters}
+              />
+            </div>
           )}
 
           {activeTab === 'jobs' && (
