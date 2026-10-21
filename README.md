@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SocialHub AI — Multi-Platform Social Media & Job Tracker Dashboard
 
-## Getting Started
+SocialHub AI is a clean, compliant SaaS web application built with **Next.js 16 (App Router)**, **TypeScript**, and **Tailwind CSS v4** to manage supported social media workflows and organize job-search activity from one secure dashboard.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 1. Directory Structure
+
+```text
+SocialHub_AI/
+├── src/
+│   ├── app/
+│   │   ├── api/
+│   │   │   ├── ai/generate/route.ts          # Server-side AI text generation
+│   │   │   ├── health/route.ts               # Security and vault health check
+│   │   │   ├── jobs/search/route.ts          # Adzuna job search API handler
+│   │   │   ├── jobs/tailor/route.ts          # AI CV & cover letter generator
+│   │   │   └── settings/test-connection/     # Live API credential handshake
+│   │   ├── globals.css                       # Dual Light/Dark CSS design tokens
+│   │   ├── layout.tsx                        # Root layout with ThemeProvider & a11y
+│   │   └── page.tsx                          # Main dashboard interactive shell
+│   ├── components/
+│   │   ├── analytics/AnalyticsReports.tsx    # Audited real-metric reporting & CSV export
+│   │   ├── calendar/CalendarView.tsx         # Content timeline & planned schedule
+│   │   ├── dashboard/                        # Sidebar, TopNav, Account Grid, Pipelines
+│   │   ├── engagement/EngagementHub.tsx      # Comment monitor & suggested reply approval
+│   │   ├── jobs/JobTracker.tsx               # Adzuna search & 6-stage Kanban board
+│   │   ├── navigation/CommandPalette.tsx     # Ctrl+K global keyboard command hub
+│   │   ├── publishing/                       # Previews, editor, & publish confirmation
+│   │   ├── security/SecurityCenter.tsx       # Live security audit & SQL schema copy
+│   │   ├── settings/AiProviderSettings.tsx   # Gemini, Groq, & OpenAI key configuration
+│   │   └── theme/ThemeProvider.tsx           # Persistent White & Dark theme context
+│   ├── data/mockDashboardData.ts             # Realistic sandbox demo data
+│   ├── lib/security/                         # AES-256-GCM token vault & input validators
+│   └── types/dashboard.ts                    # TypeScript contracts & data interfaces
+├── supabase/migrations/
+│   └── 001_initial_schema.sql                # Complete PostgreSQL schema with RLS policies
+├── .env.example                              # Safe placeholder environment template
+├── .gitignore                                # Prevents accidental secret or build commits
+├── package.json                              # Dependencies (Next.js 16, React 19, Lucide)
+└── README.md                                 # Beginner-friendly setup guide
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 2. Tools & Accounts Required
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All required tools operate within **100% free developer tiers**:
 
-## Learn More
+1. **Node.js (v20+ Recommended)**: Installed locally on your development machine.
+2. **Git**: Installed for safe version control.
+3. **GitHub Account**: To host your private repository and connect continuous deployment.
+4. **Supabase Account** ([supabase.com](https://supabase.com)): Free PostgreSQL database, authentication, and Row Level Security (RLS).
+5. **Google AI Studio Account** ([aistudio.google.com](https://aistudio.google.com)): Free API key for Gemini 2.0 Flash models.
+6. **LinkedIn Developer Portal** ([linkedin.com/developers](https://www.linkedin.com/developers)): Self-serve developer application for the Share API v2 (`w_member_social`).
+7. **Adzuna Developer Account** ([developer.adzuna.com](https://developer.adzuna.com)): Free API credentials for real job searches.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 3. Safe Git Setup
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project is initialized with safety guardrails:
+- `.env*` files containing real secrets are strictly ignored by `.gitignore`.
+- Only `.env.example` containing non-secret placeholder values is committed to Git.
 
-## Deploy on Vercel
+Safe commands for inspecting and saving changes:
+```bash
+# Check modified files
+git status
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Review exact changes
+git diff
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Stage all approved changes
+git add .
+
+# Save a commit checkpoint
+git commit -m "Your descriptive commit message"
+```
+
+---
+
+## 4. Local Environment Setup
+
+1. Copy the safe template to create your local private configuration:
+   ```bash
+   cp .env.example .env.local
+   ```
+   *(On Windows PowerShell: `Copy-Item .env.example .env.local`)*
+
+2. Open `.env.local` in your editor and insert your private API keys. Remember: **Never commit `.env.local` to Git.**
+
+---
+
+## 5. Running the Application Locally
+
+```bash
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+- Press **`Ctrl+K`** (or **`Cmd+K`**) anywhere to open the **Command Palette**.
+- Click the **Sun/Moon icon** in the top navigation to switch between Crisp White and Dark-Neutral themes.
+- Test the system security health endpoint at [http://localhost:3000/api/health](http://localhost:3000/api/health).
