@@ -24,6 +24,7 @@ interface SidebarProps {
   draftsCount: number;
   scheduledCount: number;
   engagementCount?: number;
+  jobsCount?: number;
 }
 
 export default function Sidebar({
@@ -34,6 +35,7 @@ export default function Sidebar({
   draftsCount,
   scheduledCount,
   engagementCount = 3,
+  jobsCount,
 }: SidebarProps) {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
@@ -42,7 +44,7 @@ export default function Sidebar({
     { id: 'engagement', label: 'Engagement & Replies', icon: MessageSquare, count: engagementCount },
     { id: 'content', label: 'Drafts & Pipeline', icon: Layers, count: draftsCount + scheduledCount },
     { id: 'history', label: 'Publishing History', icon: History },
-    { id: 'jobs', label: 'Job Tracker', icon: Briefcase, badge: 'Adzuna' },
+    { id: 'jobs', label: 'Job Tracker', icon: Briefcase, count: jobsCount },
     { id: 'accounts', label: 'Connected Accounts', icon: Share2 },
     { id: 'settings', label: 'AI Provider Settings', icon: Settings2 },
   ];

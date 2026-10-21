@@ -54,6 +54,44 @@ export interface SocialInteraction {
   isDemo: boolean;
 }
 
+export type ApplicationStatus = 'saved' | 'drafting' | 'applied' | 'interviewing' | 'offered' | 'rejected';
+
+export interface JobApplication {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salary?: string;
+  url: string;
+  source: 'adzuna' | 'indeed' | 'linkedin' | 'direct';
+  status: ApplicationStatus;
+  createdAt: string;
+  deadline?: string;
+  appliedAt?: string;
+  followUpDate?: string;
+  interviewDate?: string;
+  notes?: string;
+  descriptionSnippet?: string;
+  tailoredCvSummary?: string;
+  coverLetter?: string;
+  recruiterMessage?: string;
+  isDemo: boolean;
+}
+
+export interface JobSearchResult {
+  id: string;
+  title: string;
+  company: string;
+  location: string;
+  salaryMin?: number;
+  salaryMax?: number;
+  contractTime?: string;
+  description: string;
+  redirectUrl: string;
+  source: string;
+  created: string;
+}
+
 export interface SystemNotification {
   id: string;
   title: string;

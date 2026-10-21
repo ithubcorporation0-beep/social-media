@@ -15,18 +15,21 @@ import PostPreviewModal from '@/components/publishing/PostPreviewModal';
 import PublishConfirmModal from '@/components/publishing/PublishConfirmModal';
 import EditPostModal from '@/components/publishing/EditPostModal';
 import EngagementHub from '@/components/engagement/EngagementHub';
+import JobTracker from '@/components/jobs/JobTracker';
 import { 
   initialAccounts, 
   initialContentItems, 
   initialNotifications,
-  initialInteractions 
+  initialInteractions,
+  initialJobApplications
 } from '@/data/mockDashboardData';
 import { 
   SocialAccount, 
   ContentItem, 
   PlatformId,
   SystemNotification,
-  SocialInteraction
+  SocialInteraction,
+  JobApplication
 } from '@/types/dashboard';
 import { 
   FileText, 
@@ -53,6 +56,7 @@ export default function DashboardPage() {
   const [contentItems, setContentItems] = useState<ContentItem[]>(initialContentItems);
   const [notifications, setNotifications] = useState<SystemNotification[]>(initialNotifications);
   const [interactions, setInteractions] = useState<SocialInteraction[]>(initialInteractions);
+  const [jobApplications, setJobApplications] = useState<JobApplication[]>(initialJobApplications);
 
   // Modals & Drawers
   const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
@@ -178,6 +182,35 @@ export default function DashboardPage() {
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
+  const handleAddJobApplication = (newAppData: Omit<JobApplication, 'id' | 'createdAt'>) => {
+    const newApp: JobApplication = {
+      ...newAppData,
+      id: `app-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setJobApplications((prev) => [newApp, ...prev]);
+
+    const newNotif: SystemNotification = {
+      id: `notif-${Date.now()}`,
+      title: 'Job Added to Tracker',
+      message: `"${newApp.title}" at ${newApp.company} saved to pipeline.`,
+      type: 'success',
+      timestamp: 'Just now',
+      read: false,
+    };
+    setNotifications((prev) => [newNotif, ...prev]);
+  };
+
+  const handleUpdateJobApplication = (updatedApp: JobApplication) => {
+    setJobApplications((prev) =>
+      prev.map((app) => (app.id === updatedApp.id ? updatedApp : app))
+    );
+  };
+
+  const handleDeleteJobApplication = (id: string) => {
+    setJobApplications((prev) => prev.filter((app) => app.id !== id));
+  };
+
   const handleStudioSave = (item: Omit<ContentItem, 'id' | 'createdAt'>) => {
     handleSaveNewPost(item);
     setActiveTab('calendar');
@@ -203,6 +236,7 @@ export default function DashboardPage() {
         draftsCount={draftsCount}
         scheduledCount={scheduledCount}
         engagementCount={pendingEngagementCount}
+        jobsCount={jobApplications.length}
       />
 
       {/* Main Content Area */}
@@ -371,74 +405,12 @@ export default function DashboardPage() {
           )}
 
           {activeTab === 'jobs' && (
-            <div className="glass-panel rounded-2xl p-8 border border-white/5 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-emerald-400" />
-                    <h2 className="text-lg font-bold text-white tracking-tight">Job Search & Application Tracker</h2>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold font-mono">
-                      Adzuna Official API
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-400 mt-1">
-                    Search legal job listings via Adzuna and track external applications (Indeed, LinkedIn) in one pipeline.
-                  </p>
-                </div>
-              </div>
-
-              {/* Sample job items */}
-              <div className="space-y-3">
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-sm text-white">Full-Stack AI Application Engineer</h3>
-                    <p className="text-xs text-slate-400">ModernSaaS Labs • Remote (US/Canada) • $130,000 - $160,000</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400">Next.js 16</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400">TypeScript</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-400">OAuth APIs</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                      Applied • Follow-up in 2 days
-                    </span>
-                    <a
-                      href="https://developer.adzuna.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-900/80 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <h3 className="font-semibold text-sm text-white">Lead Frontend Engineer (Next.js & Supabase)</h3>
-                    <p className="text-xs text-slate-400">CloudFlow Technologies • Hybrid • £85,000 - £105,000</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400">React 19</span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400">Tailwind</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 border border-white/5">
-                      Drafting Cover Letter
-                    </span>
-                    <a
-                      href="https://developer.adzuna.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <JobTracker
+              applications={jobApplications}
+              onAddApplication={handleAddJobApplication}
+              onUpdateApplication={handleUpdateJobApplication}
+              onDeleteApplication={handleDeleteJobApplication}
+            />
           )}
 
           {activeTab === 'accounts' && (

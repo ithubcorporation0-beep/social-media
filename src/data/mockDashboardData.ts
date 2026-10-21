@@ -1,4 +1,4 @@
-import { SocialAccount, ContentItem, SystemNotification, SocialInteraction } from '@/types/dashboard';
+import { SocialAccount, ContentItem, SystemNotification, SocialInteraction, JobApplication } from '@/types/dashboard';
 
 export const initialAccounts: SocialAccount[] = [
   {
@@ -234,5 +234,70 @@ export const initialNotifications: SystemNotification[] = [
     timestamp: '5 hours ago',
     read: true,
     platform: 'x',
+  },
+];
+
+export const initialJobApplications: JobApplication[] = [
+  {
+    id: 'app-1',
+    title: 'Senior Full-Stack AI Engineer',
+    company: 'Synthetix Cloud Labs',
+    location: 'Remote (US/Global)',
+    salary: '$140k - $175k',
+    url: 'https://developer.adzuna.com',
+    source: 'adzuna',
+    status: 'interviewing',
+    createdAt: '2026-10-18T10:00:00Z',
+    appliedAt: '2026-10-19T14:30:00Z',
+    interviewDate: '2026-10-24T16:00:00Z',
+    followUpDate: '2026-10-25T09:00:00Z',
+    notes: 'Technical screen passed with VP of Eng. Final round with Principal Architect on Friday.',
+    tailoredCvSummary: '• 4+ years architecting Next.js 16 and Supabase cloud applications.\n• Proven experience building server-side OAuth 2.0 social integrations with zero token leaks.\n• Strong background in background job scheduling and idempotent publishing.',
+    coverLetter: 'Dear Hiring Team at Synthetix Cloud Labs,\n\nI am thrilled to apply for the Senior Full-Stack AI Engineer position. Having built SocialHub AI with Next.js App Router, TypeScript, and server-side secret isolation, I am confident in delivering high-performance, secure software that directly advances Synthetix\'s core product lines.\n\nThank you for considering my application.',
+    recruiterMessage: 'Hi Alex! Thank you for scheduling the system design round. Looking forward to speaking on Friday!',
+    isDemo: true,
+  },
+  {
+    id: 'app-2',
+    title: 'Lead Frontend Architect',
+    company: 'Veloce Data Platforms',
+    location: 'Remote / New York, NY',
+    salary: '$155k - $190k',
+    url: 'https://developer.adzuna.com',
+    source: 'adzuna',
+    status: 'applied',
+    createdAt: '2026-10-19T11:00:00Z',
+    appliedAt: '2026-10-20T09:15:00Z',
+    followUpDate: '2026-10-27T10:00:00Z',
+    notes: 'Applied via official careers portal. Follow-up email scheduled for 7 days after submission.',
+    isDemo: true,
+  },
+  {
+    id: 'app-3',
+    title: 'AI Product Engineer (LLM Routing)',
+    company: 'Nexus Automation',
+    location: 'San Francisco, CA / Hybrid',
+    salary: '$160k - $210k',
+    url: 'https://www.linkedin.com/jobs/view/sample-nexus-ai',
+    source: 'linkedin',
+    status: 'drafting',
+    createdAt: '2026-10-20T14:15:00Z',
+    deadline: '2026-10-31T23:59:59Z',
+    notes: 'Generating tailored cover letter and CV summary for recruiter outreach.',
+    isDemo: true,
+  },
+  {
+    id: 'app-4',
+    title: 'Staff Full-Stack Engineer',
+    company: 'FinTech Secure Systems',
+    location: 'Remote',
+    salary: '$170k - $200k',
+    url: 'https://www.indeed.com/viewjob?jk=sample-fintech-job',
+    source: 'indeed',
+    status: 'saved',
+    createdAt: '2026-10-21T03:00:00Z',
+    deadline: '2026-11-05T00:00:00Z',
+    notes: 'Saved from Indeed for review. Need to tailor CV highlighting PostgreSQL Row-Level Security.',
+    isDemo: true,
   },
 ];
