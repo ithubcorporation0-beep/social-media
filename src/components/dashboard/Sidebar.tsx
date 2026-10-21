@@ -16,7 +16,8 @@ import {
   BarChart3,
   X,
   Sun,
-  Moon
+  Moon,
+  UserCheck
 } from 'lucide-react';
 import { useTheme } from '@/components/theme/ThemeProvider';
 
@@ -29,6 +30,12 @@ interface SidebarProps {
   scheduledCount: number;
   engagementCount?: number;
   jobsCount?: number;
+  onOpenAuthModal?: () => void;
+  currentUser?: {
+    name: string;
+    email: string;
+    role: string;
+  };
 }
 
 export default function Sidebar({
@@ -40,6 +47,12 @@ export default function Sidebar({
   scheduledCount,
   engagementCount = 3,
   jobsCount,
+  onOpenAuthModal,
+  currentUser = {
+    name: 'Demo Operator',
+    email: 'demo@socialhub.local',
+    role: 'Default Sandbox Operator',
+  },
 }: SidebarProps) {
   const { theme, toggleTheme } = useTheme();
 
@@ -192,23 +205,29 @@ export default function Sidebar({
           </div>
         </div>
 
-        {/* User Profile Footer */}
-        <div className="p-3.5 border-t border-slate-200 dark:border-white/5 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+        {/* User Profile Footer (Clickable to open Supabase Auth modal) */}
+        <div className="p-3.5 border-t border-slate-200 dark:border-white/5 flex items-center justify-between gap-2">
+          <button
+            onClick={onOpenAuthModal}
+            className="flex items-center gap-2.5 min-w-0 flex-1 text-left p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+            title="Manage Supabase Auth session & RLS tenant"
+            aria-label="Manage user session"
+          >
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 border border-white/20 flex items-center justify-center font-bold text-xs text-white shrink-0">
-              DO
+              {currentUser.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">Demo Operator</p>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">demo@socialhub.local</p>
+              <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{currentUser.name}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{currentUser.email}</p>
             </div>
-          </div>
+            <UserCheck className="w-3.5 h-3.5 text-slate-400" />
+          </button>
 
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none shrink-0"
             title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
-            aria-label={`Switch theme`}
+            aria-label="Switch theme"
           >
             {theme === 'dark' ? (
               <Sun className="w-4 h-4 text-amber-400" />

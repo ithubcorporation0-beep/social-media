@@ -20,6 +20,7 @@ import AnalyticsReports from '@/components/analytics/AnalyticsReports';
 import AiProviderSettings from '@/components/settings/AiProviderSettings';
 import SecurityCenter from '@/components/security/SecurityCenter';
 import CommandPalette from '@/components/navigation/CommandPalette';
+import AuthModal from '@/components/auth/AuthModal';
 import { 
   initialAccounts, 
   initialContentItems, 
@@ -58,8 +59,17 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId | 'all'>('all');
+
+  // User Profile & Tenant State (Supabase Auth Context)
+  const [currentUser, setCurrentUser] = useState({
+    id: 'usr_demo_operator',
+    email: 'demo@socialhub.local',
+    name: 'Demo Operator',
+    role: 'Default Sandbox Operator (RLS Ready)',
+  });
 
   // Data States
   const [accounts, setAccounts] = useState<SocialAccount[]>(initialAccounts);
@@ -266,6 +276,8 @@ export default function DashboardPage() {
         scheduledCount={scheduledCount}
         engagementCount={pendingEngagementCount}
         jobsCount={jobApplications.length}
+        onOpenAuthModal={() => setAuthModalOpen(true)}
+        currentUser={currentUser}
       />
 
       {/* Main Content Area */}
@@ -497,6 +509,14 @@ export default function DashboardPage() {
         onClose={() => setCommandPaletteOpen(false)}
         onSelectTab={(tab) => setActiveTab(tab)}
         onOpenCreatePost={() => setCreatePostOpen(true)}
+      />
+
+      {/* Interactive Supabase Auth & Multi-Tenant RLS Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        currentUser={currentUser}
+        onSwitchUser={(u) => setCurrentUser(u)}
       />
 
       {/* Interactive Drawers & Modals */}
