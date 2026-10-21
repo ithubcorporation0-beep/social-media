@@ -72,11 +72,11 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
   // Platform icon helper
   const getPlatformIcon = (platform: PlatformId) => {
     switch (platform) {
-      case 'linkedin': return <LinkedInIcon className="w-4 h-4" />;
-      case 'facebook': return <FacebookIcon className="w-4 h-4" />;
-      case 'instagram': return <InstagramIcon className="w-4 h-4" />;
-      case 'youtube': return <YouTubeIcon className="w-4 h-4" />;
-      case 'x': return <XIcon className="w-3.5 h-3.5 text-slate-100" />;
+      case 'linkedin': return <LinkedInIcon className="w-4 h-4 text-blue-500" />;
+      case 'facebook': return <FacebookIcon className="w-4 h-4 text-blue-600" />;
+      case 'instagram': return <InstagramIcon className="w-4 h-4 text-pink-500" />;
+      case 'youtube': return <YouTubeIcon className="w-4 h-4 text-red-500" />;
+      case 'x': return <XIcon className="w-3.5 h-3.5 text-slate-800 dark:text-slate-100" />;
       default: return <Share2 className="w-4 h-4 text-slate-400" />;
     }
   };
@@ -123,20 +123,20 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
   return (
     <div className="space-y-6">
       {/* Top Header & Compliance Guarantee */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/5 space-y-4">
+      <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-white/5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white tracking-tight">Performance Analytics & Reports</h1>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Performance Analytics & Reports</h1>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   Verified Data Only
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Audited reach, impressions, clicks, and engagement streamed only from official platform APIs.
               </p>
             </div>
@@ -146,164 +146,154 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
             <button
               onClick={handleExportCsv}
               disabled={isExportingCsv}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-semibold transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none disabled:opacity-50"
             >
-              <Download className="w-3.5 h-3.5 text-indigo-400" />
+              <Download className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
               <span>{isExportingCsv ? 'Exporting...' : 'Export CSV'}</span>
             </button>
 
             <button
               onClick={handlePrintReport}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-semibold transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
             >
-              <Printer className="w-3.5 h-3.5 text-slate-400" />
+              <Printer className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
               <span>Print / PDF Report</span>
             </button>
           </div>
         </div>
 
-        {/* Strict Anti-Fabrication Notice */}
-        <div className="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/30 flex items-start gap-3">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-300 space-y-1">
-            <span className="font-semibold text-emerald-300">Audited Metrics Integrity Policy:</span>
-            <p className="text-slate-400 leading-relaxed">
-              SocialHub AI never fabricates or hallucinates engagement stats. Metrics below are aggregated exclusively from authorized developer connections (LinkedIn Community API, Meta Graph API v21). Any platform restriction (such as X Free Tier read limitations) is explicitly flagged with clear transparency.
-            </p>
+        {/* Date and Platform Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-white/5">
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-slate-400 dark:text-slate-500 mr-2 font-medium flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5" /> Date Range:
+            </span>
+            {(['7d', '30d', '90d', 'all'] as const).map((range) => (
+              <button
+                key={range}
+                onClick={() => setDateRange(range)}
+                className={`px-2.5 py-1 rounded-lg font-semibold transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
+                  dateRange === range
+                    ? 'bg-indigo-600 text-white shadow-sm'
+                    : 'bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                }`}
+              >
+                {range === '7d' ? 'Last 7 Days' : range === '30d' ? 'Last 30 Days' : range === '90d' ? 'Last 90 Days' : 'All Time'}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400 dark:text-slate-500 font-medium flex items-center gap-1">
+              <Filter className="w-3.5 h-3.5" /> Platform:
+            </span>
+            <select
+              value={selectedPlatform}
+              onChange={(e) => setSelectedPlatform(e.target.value as any)}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-xl px-2.5 py-1 text-slate-700 dark:text-slate-300 font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500 shadow-sm"
+            >
+              <option value="all">All Channels</option>
+              <option value="linkedin">LinkedIn</option>
+              <option value="facebook">Facebook</option>
+              <option value="instagram">Instagram</option>
+              <option value="youtube">YouTube</option>
+              <option value="x">X (Twitter)</option>
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Filter Ribbon: Date Range & Platform Selector */}
-      <div className="glass-panel rounded-2xl p-4 border border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-slate-400 flex items-center gap-1 mr-1">
-            <Filter className="w-3.5 h-3.5" /> Platform:
-          </span>
-          {(['all', 'linkedin', 'facebook', 'instagram', 'youtube', 'x'] as (PlatformId | 'all')[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setSelectedPlatform(p)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize flex items-center gap-1.5 cursor-pointer ${
-                selectedPlatform === p
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-900/80 text-slate-400 hover:text-white border border-white/5'
-              }`}
-            >
-              {p !== 'all' && getPlatformIcon(p as PlatformId)}
-              <span>{p === 'all' ? 'All Platforms' : p === 'x' ? 'X (Twitter)' : p}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-xl border border-white/10 text-xs">
-          {(['7d', '30d', '90d', 'all'] as const).map((r) => (
-            <button
-              key={r}
-              onClick={() => setDateRange(r)}
-              className={`px-3 py-1 rounded-lg font-medium cursor-pointer transition-all ${
-                dateRange === r ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              {r === '7d' ? '7 Days' : r === '30d' ? '30 Days' : r === '90d' ? '90 Days' : 'All Time'}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Key Metric Summary Cards */}
+      {/* Aggregate Performance KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="glass-panel rounded-2xl p-5 border border-white/5 space-y-2">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Verified Impressions</span>
-            <Eye className="w-4 h-4 text-indigo-400" />
+        <div className="glass-panel-interactive rounded-2xl p-5 border border-slate-200 dark:border-white/5 space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
+            <span>Verified Reach</span>
+            <Eye className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
           </div>
-          <p className="text-2xl font-bold text-white font-mono">
-            {totalImpressions > 0 ? totalImpressions.toLocaleString() : '0'}
-          </p>
-          <p className="text-[11px] text-slate-400">Streamed from official post APIs</p>
-        </div>
-
-        <div className="glass-panel rounded-2xl p-5 border border-white/5 space-y-2">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Aggregated Reach</span>
-            <Users className="w-4 h-4 text-purple-400" />
-          </div>
-          <p className="text-2xl font-bold text-white font-mono">
+          <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
             {totalReach > 0 ? totalReach.toLocaleString() : '0'}
           </p>
-          <p className="text-[11px] text-slate-400">Unique accounts reached</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Meta & LinkedIn unique accounts</p>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-white/5 space-y-2">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Average Engagement</span>
-            <TrendingUp className="w-4 h-4 text-emerald-400" />
+        <div className="glass-panel-interactive rounded-2xl p-5 border border-slate-200 dark:border-white/5 space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
+            <span>Total Impressions</span>
+            <TrendingUp className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
           </div>
-          <p className="text-2xl font-bold text-emerald-400 font-mono">
-            {avgEngagementRate}%
+          <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
+            {totalImpressions > 0 ? totalImpressions.toLocaleString() : '0'}
           </p>
-          <p className="text-[11px] text-slate-400">Reactions & comments / reach</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Total display count from APIs</p>
         </div>
 
-        <div className="glass-panel rounded-2xl p-5 border border-white/5 space-y-2">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
-            <span>Tracked Link Clicks</span>
-            <MousePointerClick className="w-4 h-4 text-blue-400" />
+        <div className="glass-panel-interactive rounded-2xl p-5 border border-slate-200 dark:border-white/5 space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
+            <span>Avg. Engagement Rate</span>
+            <Users className="w-4 h-4 text-purple-500 dark:text-purple-400" />
           </div>
-          <p className="text-2xl font-bold text-white font-mono">
+          <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono">{avgEngagementRate}%</p>
+          <p className="text-[11px] text-purple-600 dark:text-purple-300 font-semibold">Verified interactions / reach</p>
+        </div>
+
+        <div className="glass-panel-interactive rounded-2xl p-5 border border-slate-200 dark:border-white/5 space-y-1">
+          <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
+            <span>Tracked Link Clicks</span>
+            <MousePointerClick className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
             {totalClicks > 0 ? totalClicks.toLocaleString() : '0'}
           </p>
-          <p className="text-[11px] text-slate-400">Internal outbound redirection</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400">Internal outbound redirection</p>
         </div>
       </div>
 
       {/* Platform API Readiness & Metric Availability Matrix */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/5 space-y-4">
-        <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <Info className="w-4 h-4 text-indigo-400" />
+      <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-white/5 space-y-4">
+        <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Info className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
           <span>Platform Metric Availability & Permission Status</span>
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-emerald-500/20 space-y-1.5">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-emerald-500/20 space-y-1.5 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <LinkedInIcon className="w-3.5 h-3.5" /> LinkedIn API v2
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
                 Full Metrics
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-snug">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
               Supports real impressions, unique reach, clicks, and comment counts via <code>w_member_social</code>.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-emerald-500/20 space-y-1.5">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-emerald-500/20 space-y-1.5 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
+              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                 <FacebookIcon className="w-3.5 h-3.5" /> Meta Graph API v21
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold">
                 Page Insights
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-snug">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
               Page post impressions, engaged users, and negative feedback tracking via <code>read_insights</code>.
             </p>
           </div>
 
-          <div className="p-3.5 rounded-xl bg-slate-900/70 border border-amber-500/20 space-y-1.5">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-amber-500/20 space-y-1.5 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <XIcon className="w-3 h-3 text-white" /> X (Twitter) API v2
+              <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <XIcon className="w-3 h-3 text-slate-800 dark:text-white" /> X (Twitter) API v2
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 font-semibold">
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 font-semibold">
                 Tier Restricted
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-snug">
+            <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug">
               Free tier restricts read metrics ($100/mo Basic required for native reach). Outbound clicks tracked via SocialHub redirect.
             </p>
           </div>
@@ -311,13 +301,13 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
       </div>
 
       {/* Published Post Performance Breakdown Table */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/5 space-y-4">
+      <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-white/5 space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white">Post-Level Performance Audit</h3>
-            <p className="text-xs text-slate-400">Granular metric records with verified API provenance</p>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Post-Level Performance Audit</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Granular metric records with verified API provenance</p>
           </div>
-          <span className="text-xs text-slate-400 font-mono">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
             Showing {filteredItems.length} records
           </span>
         </div>
@@ -325,7 +315,7 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-white/10 text-slate-400">
+              <tr className="border-b border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400">
                 <th className="pb-3 font-semibold pl-2">Post Title</th>
                 <th className="pb-3 font-semibold">Platform</th>
                 <th className="pb-3 font-semibold">Published</th>
@@ -336,59 +326,59 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
                 <th className="pb-3 font-semibold text-center pr-2">API Verification</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {filteredItems.map((item) => (
-                <tr key={item.id} className="hover:bg-white/5 transition-colors group">
+                <tr key={item.id} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
                   <td className="py-3.5 pl-2 max-w-[240px]">
-                    <p className="font-semibold text-white truncate">{item.postTitle}</p>
+                    <p className="font-semibold text-slate-900 dark:text-white truncate">{item.postTitle}</p>
                     {item.statusNote && (
-                      <p className="text-[10px] text-slate-400 truncate mt-0.5">{item.statusNote}</p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">{item.statusNote}</p>
                     )}
                   </td>
                   <td className="py-3.5">
-                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-white/5 text-slate-300 font-medium capitalize">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 font-semibold capitalize border border-slate-200 dark:border-transparent">
                       {getPlatformIcon(item.platform)}
                       <span>{item.platform}</span>
                     </span>
                   </td>
-                  <td className="py-3.5 text-slate-400 font-mono text-[11px]">
+                  <td className="py-3.5 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
                     {new Date(item.publishedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                   </td>
                   <td className="py-3.5 text-right font-mono">
                     {item.impressions !== null ? (
-                      <span className="text-white font-medium">{item.impressions.toLocaleString()}</span>
+                      <span className="text-slate-900 dark:text-white font-medium">{item.impressions.toLocaleString()}</span>
                     ) : (
-                      <span className="text-slate-500 italic text-[11px]">Restricted</span>
+                      <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">Restricted</span>
                     )}
                   </td>
                   <td className="py-3.5 text-right font-mono">
                     {item.reach !== null ? (
-                      <span className="text-white font-medium">{item.reach.toLocaleString()}</span>
+                      <span className="text-slate-900 dark:text-white font-medium">{item.reach.toLocaleString()}</span>
                     ) : (
-                      <span className="text-slate-500 italic text-[11px]">Restricted</span>
+                      <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">Restricted</span>
                     )}
                   </td>
                   <td className="py-3.5 text-right font-mono">
                     {item.engagementRate !== null ? (
-                      <span className="text-emerald-400 font-semibold">{item.engagementRate}%</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{item.engagementRate}%</span>
                     ) : (
-                      <span className="text-slate-500 italic text-[11px]">N/A</span>
+                      <span className="text-slate-400 dark:text-slate-500 italic text-[11px]">N/A</span>
                     )}
                   </td>
-                  <td className="py-3.5 text-right font-mono text-blue-400 font-medium">
+                  <td className="py-3.5 text-right font-mono text-blue-600 dark:text-blue-400 font-semibold">
                     {item.clicks !== null ? item.clicks : 0}
                   </td>
                   <td className="py-3.5 text-center pr-2">
                     {item.status === 'verified_api' ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                         <CheckCircle2 className="w-3 h-3" /> API Verified
                       </span>
                     ) : item.status === 'restricted_by_platform' ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
                         <AlertTriangle className="w-3 h-3" /> Restricted
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-white/5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/5">
                         <Lock className="w-3 h-3" /> Unlinked
                       </span>
                     )}

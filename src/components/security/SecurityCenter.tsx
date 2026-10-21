@@ -19,14 +19,10 @@ import {
 } from 'lucide-react';
 
 export default function SecurityCenter() {
-  const [activeTab, setActiveTab] = useState<'audit' | 'sql' | 'vault'>('audit');
+  const [activeTab, setActiveTab] = useState<'audit' | 'sql'>('audit');
   const [healthData, setHealthData] = useState<any>(null);
   const [loadingHealth, setLoadingHealth] = useState(false);
   const [copiedSql, setCopiedSql] = useState(false);
-
-  // Vault interactive test
-  const [testPlaintext, setTestPlaintext] = useState('user_oauth_refresh_token_sample');
-  const [vaultStatus, setVaultStatus] = useState<string | null>(null);
 
   const fetchHealthAudit = async () => {
     setLoadingHealth(true);
@@ -99,39 +95,19 @@ CREATE TABLE IF NOT EXISTS public.content_items (
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS public.job_applications (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  company TEXT NOT NULL,
-  location TEXT DEFAULT 'Remote' NOT NULL,
-  salary TEXT,
-  url TEXT NOT NULL,
-  source TEXT DEFAULT 'direct',
-  status TEXT DEFAULT 'saved',
-  deadline TIMESTAMPTZ,
-  applied_at TIMESTAMPTZ,
-  follow_up_date TIMESTAMPTZ,
-  interview_date TIMESTAMPTZ,
-  notes TEXT,
-  tailored_cv_summary TEXT,
-  cover_letter TEXT,
-  recruiter_message TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
-);
-
--- Enable RLS on every table
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.social_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.content_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.job_applications ENABLE ROW LEVEL SECURITY;
 
--- Strict Isolation Policies
-CREATE POLICY "profiles_own" ON public.profiles FOR ALL USING (auth.uid() = id);
-CREATE POLICY "social_accounts_own" ON public.social_accounts FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "content_items_own" ON public.content_items FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (auth.uid() = user_id);`;
+CREATE POLICY "Users can only view and edit their own profile"
+  ON public.profiles FOR ALL USING (auth.uid() = id);
+
+CREATE POLICY "Users can only access their own social accounts"
+  ON public.social_accounts FOR ALL USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can only access their own content items"
+  ON public.content_items FOR ALL USING (auth.uid() = user_id);
+`;
 
     navigator.clipboard.writeText(sqlText);
     setCopiedSql(true);
@@ -140,60 +116,60 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
 
   const securityChecklist = [
     {
-      title: 'Row-Level Security (RLS) Enforced',
-      description: 'All 6 database tables mandate `auth.uid() = user_id` policies. Zero cross-tenant record leakage.',
+      title: 'Supabase Row Level Security (RLS)',
+      status: 'Implemented',
+      badge: 'Database Isolation',
+      description: 'Zero cross-tenant data leaks. Policies restrict SELECT, INSERT, UPDATE, and DELETE queries strictly to auth.uid() = user_id.',
+    },
+    {
+      title: 'Server-Side Token Vault & AES-256-GCM',
+      status: 'Implemented',
+      badge: 'Cryptographic Protection',
+      description: 'OAuth tokens and client secrets are encrypted on the server before storage. Keys are never transmitted in browser bundles.',
+    },
+    {
+      title: 'Zero NEXT_PUBLIC_ Secret Leaks',
+      status: 'Audited (0 Leaks)',
+      badge: 'Build Safety',
+      description: 'Automated health audit verifies that no sensitive API keys (Gemini, OpenAI, Groq, Adzuna, Supabase Service Role) are exposed.',
+    },
+    {
+      title: 'SSRF & Malicious Media Validation',
       status: 'Enforced',
-      badge: 'Database Layer',
+      badge: 'Input Sanitization',
+      description: 'URLs are validated against private IP ranges (127.0.0.1, 169.254.169.254). Uploaded media is vetted for MIME type and size.',
     },
     {
-      title: 'AES-256-GCM Token Encryption Vault',
-      description: 'OAuth 2.0 refresh tokens and access tokens are encrypted at rest with initialization vectors and auth tags.',
+      title: 'Publishing Idempotency & Duplicate Guard',
       status: 'Active',
-      badge: 'Server Layer',
+      badge: 'Concurrency Guard',
+      description: 'Unique SHA-256 idempotency keys prevent duplicate posts or accidental double-charging during API retries.',
     },
     {
-      title: 'Zero Client-Bundle Secret Exposure',
-      description: 'Provider keys and client secrets strictly omit `NEXT_PUBLIC_` prefixes. Scanned on build.',
-      status: 'Verified (0 Leaks)',
-      badge: 'Bundle Audit',
-    },
-    {
-      title: 'Anti-SSRF & Protocol Hardening',
-      description: 'External job URLs and webhooks reject internal loopback targets (`localhost`, `127.0.0.1`, cloud metadata IP `169.254.169.254`).',
-      status: 'Active',
-      badge: 'Network Defense',
-    },
-    {
-      title: 'Token Refresh Lifecycle & Expiry Buffers',
-      description: 'Tokens refresh automatically 5 minutes prior to expiration. Expired tokens are locked.',
-      status: 'Configured',
-      badge: 'OAuth Lifecycle',
-    },
-    {
-      title: 'Anti-Scraping & Official API Compliance',
-      description: 'Zero unauthorized scraping. Integrates with official Adzuna and social developer APIs only.',
-      status: 'Verified',
-      badge: 'Platform Terms',
+      title: 'Explicit Human Approval Gates',
+      status: 'Strict Rule',
+      badge: 'Compliance',
+      description: 'Neither posts nor replies are published automatically. Users must click confirmation before external API dispatch.',
     },
   ];
 
   return (
     <div className="space-y-6">
       {/* Top Header */}
-      <div className="glass-panel rounded-2xl p-6 border border-white/5 space-y-4">
+      <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-white/5 space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-white tracking-tight">Security Center & Access Control</h1>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Security Center & Access Control</h1>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                   RLS & Token Vaults
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Audited multi-tenant isolation, AES-256-GCM token encryption, and anti-leak secret protection.
               </p>
             </div>
@@ -203,9 +179,9 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
             <button
               onClick={fetchHealthAudit}
               disabled={loadingHealth}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 border border-white/10 text-xs font-semibold transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/10 text-xs font-semibold transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none disabled:opacity-50"
             >
-              <RefreshCw className={`w-3.5 h-3.5 text-indigo-400 ${loadingHealth ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 ${loadingHealth ? 'animate-spin' : ''}`} />
               <span>Run Security Audit</span>
             </button>
           </div>
@@ -213,28 +189,28 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
 
         {/* Live Server Audit Status Card */}
         {healthData && (
-          <div className="p-4 rounded-xl bg-slate-900/90 border border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs shadow-sm">
             <div>
-              <span className="text-slate-400 block text-[11px]">Secret Isolation</span>
-              <span className="text-emerald-400 font-bold font-mono">
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Secret Isolation</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono">
                 {healthData.security?.serverSecretIsolation}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[11px]">Token Vault Cipher</span>
-              <span className="text-white font-bold font-mono">
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">Token Vault Cipher</span>
+              <span className="text-slate-900 dark:text-white font-bold font-mono">
                 {healthData.security?.cryptographicVault?.algorithm} ({healthData.security?.cryptographicVault?.latencyMs}ms)
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[11px]">RLS Database Target</span>
-              <span className="text-indigo-400 font-bold font-mono">
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">RLS Database Target</span>
+              <span className="text-indigo-600 dark:text-indigo-400 font-bold font-mono">
                 PostgreSQL RLS
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[11px]">System Status</span>
-              <span className="text-emerald-400 font-bold font-mono flex items-center gap-1">
+              <span className="text-slate-500 dark:text-slate-400 block text-[11px]">System Status</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-bold font-mono flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> Healthy
               </span>
             </div>
@@ -242,12 +218,12 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
         )}
       </div>
 
-      {/* Mode Navigation: Audit vs SQL Migration vs Vault Test */}
-      <div className="flex items-center gap-2 bg-slate-900/60 p-1 rounded-xl border border-white/5 w-fit">
+      {/* Mode Navigation: Audit vs SQL Migration */}
+      <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl border border-slate-200 dark:border-white/5 w-fit shadow-sm">
         <button
           onClick={() => setActiveTab('audit')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'audit' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
+            activeTab === 'audit' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <ShieldCheck className="w-3.5 h-3.5" />
@@ -255,8 +231,8 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
         </button>
         <button
           onClick={() => setActiveTab('sql')}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'sql' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
+            activeTab === 'sql' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           <FileCode className="w-3.5 h-3.5" />
@@ -270,20 +246,20 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
           {securityChecklist.map((item, idx) => (
             <div
               key={idx}
-              className="glass-panel rounded-2xl p-5 border border-white/5 space-y-2.5 flex flex-col justify-between"
+              className="glass-panel-interactive rounded-2xl p-5 border border-slate-200 dark:border-white/5 space-y-2.5 flex flex-col justify-between"
             >
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-white/5 text-slate-300 border border-white/10 uppercase">
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/10 uppercase font-semibold">
                     {item.badge}
                   </span>
-                  <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1">
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     {item.status}
                   </span>
                 </div>
-                <h3 className="font-bold text-sm text-white pt-1">{item.title}</h3>
-                <p className="text-xs text-slate-400 leading-relaxed">{item.description}</p>
+                <h3 className="font-bold text-sm text-slate-900 dark:text-white pt-1">{item.title}</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{item.description}</p>
               </div>
             </div>
           ))}
@@ -292,11 +268,11 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
 
       {/* VIEW 2: SUPABASE SQL MIGRATION */}
       {activeTab === 'sql' && (
-        <div className="glass-panel rounded-2xl p-6 border border-white/5 space-y-4">
+        <div className="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-white/5 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="font-bold text-sm text-white">001_initial_schema.sql</h3>
-              <p className="text-xs text-slate-400">
+              <h3 className="font-bold text-sm text-slate-900 dark:text-white">001_initial_schema.sql</h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
                 Run this complete SQL script in your Supabase project SQL Editor to initialize all tables with Row-Level Security.
               </p>
             </div>
@@ -305,14 +281,14 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
                 href="https://supabase.com/dashboard"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold border border-white/10 transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold border border-slate-200 dark:border-white/10 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
               >
                 <span>Supabase Console</span>
                 <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
               </a>
               <button
                 onClick={handleCopySql}
-                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 cursor-pointer"
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-indigo-600/20 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
               >
                 {copiedSql ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copiedSql ? 'Copied to Clipboard!' : 'Copy SQL Script'}</span>
@@ -320,7 +296,7 @@ CREATE POLICY "job_applications_own" ON public.job_applications FOR ALL USING (a
             </div>
           </div>
 
-          <pre className="p-4 rounded-xl bg-slate-950 border border-white/10 text-xs font-mono text-slate-300 overflow-x-auto max-h-96 leading-relaxed">
+          <pre className="p-4 rounded-xl bg-slate-900 dark:bg-slate-950 border border-slate-800 dark:border-white/10 text-xs font-mono text-slate-200 overflow-x-auto max-h-96 leading-relaxed shadow-inner">
 {`-- 1. Enable Cryptographic & UUID Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/dashboard/Sidebar';
 import TopNav from '@/components/dashboard/TopNav';
 import AccountStatusGrid from '@/components/dashboard/AccountStatusGrid';
@@ -19,6 +19,7 @@ import JobTracker from '@/components/jobs/JobTracker';
 import AnalyticsReports from '@/components/analytics/AnalyticsReports';
 import AiProviderSettings from '@/components/settings/AiProviderSettings';
 import SecurityCenter from '@/components/security/SecurityCenter';
+import CommandPalette from '@/components/navigation/CommandPalette';
 import { 
   initialAccounts, 
   initialContentItems, 
@@ -56,6 +57,7 @@ export default function DashboardPage() {
   // Navigation & UI States
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedPlatform, setSelectedPlatform] = useState<PlatformId | 'all'>('all');
 
@@ -78,6 +80,18 @@ export default function DashboardPage() {
   const [previewItem, setPreviewItem] = useState<ContentItem | null>(null);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [confirmPublishItem, setConfirmPublishItem] = useState<ContentItem | null>(null);
+
+  // Global keyboard shortcuts (Ctrl+K / Cmd+K to open Command Palette)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Computed counts
   const draftsCount = contentItems.filter((i) => i.status === 'draft').length;
@@ -241,7 +255,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200">
       {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
@@ -266,61 +280,70 @@ export default function DashboardPage() {
           onOpenNotifications={() => setNotificationsOpen(true)}
           onOpenCreatePost={() => setCreatePostOpen(true)}
           onOpenMobileMenu={() => setMobileMenuOpen(true)}
+          onOpenCommandPalette={() => setCommandPaletteOpen(true)}
           systemHealth="healthy"
         />
 
-        {/* Dashboard Body Container */}
-        <main className="flex-1 p-4 lg:p-8 space-y-8 max-w-7xl mx-auto w-full">
+        {/* Dashboard Body Container with Accessible ID */}
+        <main 
+          id="main-content" 
+          tabIndex={-1} 
+          className="flex-1 p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto w-full focus:outline-none"
+        >
           {/* Top Quick Stats Ribbon */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
             <button
               onClick={() => setActiveTab('content')}
-              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+              className="glass-panel-interactive rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-white/5 space-y-1 text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+              aria-label={`View ${draftsCount} Active Drafts`}
             >
-              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
                 <span>Active Drafts</span>
-                <FileText className="w-4 h-4 text-slate-400" />
+                <FileText className="w-4 h-4 text-slate-500 dark:text-slate-400" />
               </div>
-              <p className="text-2xl font-bold text-white font-mono">{draftsCount}</p>
-              <p className="text-[11px] text-slate-400">Ready for review</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">{draftsCount}</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Ready for review</p>
             </button>
 
             <button
               onClick={() => setActiveTab('calendar')}
-              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+              className="glass-panel-interactive rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-white/5 space-y-1 text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+              aria-label={`View ${scheduledCount} Scheduled Posts`}
             >
-              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
                 <span>Scheduled</span>
-                <Clock className="w-4 h-4 text-amber-400" />
+                <Clock className="w-4 h-4 text-amber-500 dark:text-amber-400" />
               </div>
-              <p className="text-2xl font-bold text-white font-mono">{scheduledCount}</p>
-              <p className="text-[11px] text-amber-400">View in Calendar</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">{scheduledCount}</p>
+              <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">View in Calendar</p>
             </button>
 
             <button
               onClick={() => setActiveTab('engagement')}
-              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+              className="glass-panel-interactive rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-white/5 space-y-1 text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+              aria-label={`View ${pendingEngagementCount} Pending Interactions`}
             >
-              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
                 <span>Interactions</span>
-                <MessageSquare className="w-4 h-4 text-purple-400" />
+                <MessageSquare className="w-4 h-4 text-purple-500 dark:text-purple-400" />
               </div>
-              <p className="text-2xl font-bold text-white font-mono">{pendingEngagementCount}</p>
-              <p className="text-[11px] text-purple-300">Awaiting Reply</p>
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">{pendingEngagementCount}</p>
+              <p className="text-[11px] text-purple-600 dark:text-purple-300 font-medium">Awaiting Reply</p>
             </button>
 
             <button
               onClick={() => setActiveTab('accounts')}
-              className="glass-panel rounded-2xl p-4 border border-white/5 space-y-1 text-left hover:border-white/20 transition-all cursor-pointer"
+              className="glass-panel-interactive rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-white/5 space-y-1 text-left cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
+              aria-label="View Connected Accounts"
             >
-              <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+              <div className="flex items-center justify-between text-slate-500 dark:text-slate-400 text-xs font-semibold">
                 <span>Connected APIs</span>
-                <Share2 className="w-4 h-4 text-indigo-400" />
+                <Share2 className="w-4 h-4 text-indigo-500 dark:text-indigo-400" />
               </div>
-              <p className="text-2xl font-bold text-white font-mono">
+              <p className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white font-mono">
                 {accounts.filter((a) => a.status === 'connected').length} / {accounts.length}
               </p>
-              <p className="text-[11px] text-indigo-400 font-medium">Official OAuth 2.0</p>
+              <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-semibold">Official OAuth 2.0</p>
             </button>
           </div>
 
@@ -374,12 +397,12 @@ export default function DashboardPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Drafts & Scheduled Pipeline</h2>
-                  <p className="text-xs text-slate-400">Review feed mockups, edit text, or dispatch scheduled jobs</p>
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-white">Drafts & Scheduled Pipeline</h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Review feed mockups, edit text, or dispatch scheduled jobs</p>
                 </div>
                 <button
                   onClick={() => setActiveTab('studio')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-600/20"
+                  className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition-all shadow-md shadow-indigo-600/20 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>Open AI Studio</span>
@@ -402,8 +425,8 @@ export default function DashboardPage() {
           {activeTab === 'history' && (
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-white">Publishing History & Audit Logs</h2>
-                <p className="text-xs text-slate-400">Verifiable delivery logs and API status responses</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Publishing History & Audit Logs</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Verifiable delivery logs and API status responses</p>
               </div>
               <ContentOverview
                 items={contentItems.filter((i) => i.status === 'published' || i.status === 'failed')}
@@ -467,6 +490,14 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      {/* Global Command Hub Modal (Ctrl+K) */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenCreatePost={() => setCreatePostOpen(true)}
+      />
 
       {/* Interactive Drawers & Modals */}
       <NotificationDrawer
