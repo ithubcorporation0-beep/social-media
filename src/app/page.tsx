@@ -112,9 +112,10 @@ export default function DashboardPage() {
   const pendingEngagementCount = interactions.filter((i) => i.status === 'pending_reply').length;
   const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
-  // Check LinkedIn backend status on mount & handle OAuth callback redirects
+  // Check backend integration status on mount & handle OAuth callback redirects
   useEffect(() => {
-    async function checkLinkedInSync() {
+    async function checkBackendSync() {
+      // 1. Check LinkedIn Sync
       try {
         const res = await fetch('/api/auth/linkedin/status');
         if (res.ok) {
@@ -140,9 +141,37 @@ export default function DashboardPage() {
         console.error('LinkedIn sync check error:', e);
       }
 
-      // Check URL search params for OAuth callback return
+      // 2. Check Meta / Facebook Page Sync
+      try {
+        const res = await fetch('/api/auth/meta/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connected && data.account) {
+            setAccounts((prev) =>
+              prev.map((acc) =>
+                acc.platform === 'facebook'
+                  ? {
+                      ...acc,
+                      status: 'connected',
+                      name: data.account.name || acc.name,
+                      handle: data.account.handle || acc.handle,
+                      connectedAt: data.account.connectedAt,
+                      expiresAt: data.account.expiresAt,
+                    }
+                  : acc
+              )
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Meta sync check error:', e);
+      }
+
+      // 3. Check URL search params for OAuth callback returns
       if (typeof window !== 'undefined') {
         const urlParams = new URLSearchParams(window.location.search);
+
+        // LinkedIn redirects
         if (urlParams.get('linkedin_connected') === 'success') {
           const newNotif: SystemNotification = {
             id: `notif-${Date.now()}`,
@@ -169,9 +198,45 @@ export default function DashboardPage() {
           setNotifications((prev) => [newNotif, ...prev]);
           window.history.replaceState({}, document.title, window.location.pathname);
         }
+
+        // Meta / Facebook Page redirects
+        if (urlParams.get('meta_connected') === 'success') {
+          const pageName = urlParams.get('page_name') || 'Facebook Page';
+          const newNotif: SystemNotification = {
+            id: `notif-${Date.now()}`,
+            title: 'Facebook Page Connected!',
+            message: `Official Meta Graph API handshake verified. Page "${pageName}" is connected with an encrypted Page Access Token.`,
+            type: 'success',
+            timestamp: 'Just now',
+            read: false,
+            platform: 'facebook',
+          };
+          setNotifications((prev) => [newNotif, ...prev]);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        } else if (urlParams.get('meta_error')) {
+          const err = urlParams.get('meta_error');
+          const isMissingCreds = err === 'missing_credentials';
+          const newNotif: SystemNotification = {
+            id: `notif-${Date.now()}`,
+            title: isMissingCreds ? 'Meta Credentials Required' : 'Facebook Page Connection Failed',
+            message: isMissingCreds
+              ? 'META_APP_ID and META_APP_SECRET are needed in your environment to connect real Facebook Pages. Opening Setup Guide...'
+              : `Meta OAuth returned: ${err}`,
+            type: isMissingCreds ? 'warning' : 'error',
+            timestamp: 'Just now',
+            read: false,
+            platform: 'facebook',
+          };
+          setNotifications((prev) => [newNotif, ...prev]);
+          if (isMissingCreds) {
+            const fbAcc = accounts.find((a) => a.platform === 'facebook') || null;
+            setSelectedAccountForModal(fbAcc);
+          }
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
       }
     }
-    checkLinkedInSync();
+    checkBackendSync();
   }, []);
 
   // Handlers

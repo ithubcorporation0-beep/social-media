@@ -8,6 +8,14 @@ export interface MetaOAuthConfig {
   scopes: string[];
 }
 
+export interface FacebookPageInfo {
+  id: string;
+  name: string;
+  category?: string;
+  pictureUrl?: string;
+  tasks?: string[];
+}
+
 export interface StoredMetaAccount {
   id: string;
   platform: 'facebook' | 'instagram';
@@ -18,6 +26,7 @@ export interface StoredMetaAccount {
   encrypted_access_token: string;
   page_id?: string;
   ig_user_id?: string;
+  available_pages?: FacebookPageInfo[];
   scopes: string[];
   token_expires_at: string;
   avatar_url?: string;
@@ -26,7 +35,7 @@ export interface StoredMetaAccount {
   is_sandbox?: boolean;
 }
 
-// In-memory persistent server vault for Meta integration
+// In-memory persistent server vault for Meta integration (persisted across warm serverless requests)
 let serverMetaStore: StoredMetaAccount | null = null;
 
 export function getMetaOAuthConfig(origin: string = 'http://localhost:3000'): MetaOAuthConfig {
@@ -62,7 +71,7 @@ export function generateMetaAuthUrl(origin: string, state: string): { url: strin
   );
 
   const params = new URLSearchParams({
-    client_id: config.appId || 'sandbox_meta_app_id',
+    client_id: config.appId,
     redirect_uri: config.redirectUri,
     state,
     scope: config.scopes.join(','),
@@ -80,61 +89,143 @@ export function generateMetaAuthUrl(origin: string, state: string): { url: strin
  */
 export async function exchangeCodeForMetaToken(code: string, origin: string): Promise<StoredMetaAccount> {
   const config = getMetaOAuthConfig(origin);
-  const isSandbox = code.startsWith('sandbox_') || !config.appId || config.appId === 'your_meta_app_id';
-
-  let rawToken = `EAA_${Buffer.from(`meta_user_token_${Date.now()}`).toString('base64url')}`;
-  let pageName = 'SocialHub Official Page';
-  let pageHandle = '@socialhub_hq';
-  let expiresAt = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(); // 60 days standard
-
-  if (!isSandbox) {
-    // Live Meta Graph exchange
-    const tokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${config.appId}&redirect_uri=${encodeURIComponent(
-      config.redirectUri
-    )}&client_secret=${config.appSecret}&code=${encodeURIComponent(code)}`;
-
-    const res = await fetch(tokenUrl);
-    if (!res.ok) {
-      const err = await res.text();
-      throw new Error(`Meta token exchange failed: ${err}`);
-    }
-    const tokenData = await res.json();
-    rawToken = tokenData.access_token;
-
-    // Fetch user pages
-    const accountsRes = await fetch(
-      `https://graph.facebook.com/v19.0/me/accounts?access_token=${rawToken}`
-    );
-    if (accountsRes.ok) {
-      const accData = await accountsRes.json();
-      if (accData.data && accData.data.length > 0) {
-        pageName = accData.data[0].name;
-        pageHandle = `@${pageName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
-        rawToken = accData.data[0].access_token; // Use Page Access Token
-      }
-    }
+  
+  if (!config.appId || config.appId === 'your_meta_app_id' || !config.appSecret || config.appSecret === 'your_meta_app_secret') {
+    throw new Error('META_APP_ID and META_APP_SECRET must be configured in environment variables to connect real Facebook Pages.');
   }
 
-  const encryptedToken = encryptToken(rawToken);
+  // 1. Exchange code for short-lived user access token
+  const tokenUrl = `https://graph.facebook.com/v19.0/oauth/access_token?client_id=${config.appId}&redirect_uri=${encodeURIComponent(
+    config.redirectUri
+  )}&client_secret=${config.appSecret}&code=${encodeURIComponent(code)}`;
+
+  const tokenRes = await fetch(tokenUrl);
+  if (!tokenRes.ok) {
+    const errData = await tokenRes.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || `Meta OAuth token exchange failed (HTTP ${tokenRes.status})`);
+  }
+  const tokenData = await tokenRes.json();
+  const shortLivedUserToken = tokenData.access_token;
+
+  // 2. Exchange short-lived user token for long-lived user token (valid for ~60 days)
+  const longLivedUrl = `https://graph.facebook.com/v19.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${config.appId}&client_secret=${config.appSecret}&fb_exchange_token=${shortLivedUserToken}`;
+  const longLivedRes = await fetch(longLivedUrl);
+  let userToken = shortLivedUserToken;
+  if (longLivedRes.ok) {
+    const longLivedData = await longLivedRes.json();
+    userToken = longLivedData.access_token || shortLivedUserToken;
+  }
+
+  // 3. Fetch user's managed Facebook Pages
+  const accountsRes = await fetch(
+    `https://graph.facebook.com/v19.0/me/accounts?access_token=${userToken}&fields=id,name,access_token,category,tasks,picture{url}`
+  );
+  
+  if (!accountsRes.ok) {
+    const errData = await accountsRes.json().catch(() => ({}));
+    throw new Error(errData?.error?.message || 'Failed to retrieve Facebook Pages from Meta Graph API.');
+  }
+
+  const accData = await accountsRes.json();
+  const pages = accData.data || [];
+
+  if (pages.length === 0) {
+    throw new Error('No Facebook Pages found. You must be an administrator of at least one Facebook Page to connect. Create a page at https://www.facebook.com/pages/create first.');
+  }
+
+  // Select primary page (first page user administers)
+  const primaryPage = pages[0];
+  const pageId = primaryPage.id;
+  const pageName = primaryPage.name;
+  const pageToken = primaryPage.access_token; // Permanent Page Access Token
+  const avatarUrl = primaryPage.picture?.data?.url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80';
+
+  const availablePages: FacebookPageInfo[] = pages.map((p: any) => ({
+    id: p.id,
+    name: p.name,
+    category: p.category,
+    pictureUrl: p.picture?.data?.url,
+    tasks: p.tasks,
+  }));
+
+  // 4. Encrypt the permanent Page Access Token at rest with AES-256-GCM
+  const encryptedToken = encryptToken(pageToken);
 
   const account: StoredMetaAccount = {
     id: 'acc-facebook',
     platform: 'facebook',
     name: pageName,
-    handle: pageHandle,
+    handle: `@page_${pageId}`,
     accountType: 'page',
     status: 'connected',
     encrypted_access_token: encryptedToken,
+    page_id: pageId,
+    available_pages: availablePages,
     scopes: config.scopes,
-    token_expires_at: expiresAt,
-    avatar_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+    token_expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // Page tokens are long-lived
+    avatar_url: avatarUrl,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    is_sandbox: isSandbox,
+    is_sandbox: false,
   };
 
   serverMetaStore = account;
   return account;
+}
+
+/**
+ * Publishes a post or photo to the connected Facebook Page.
+ */
+export async function publishToFacebookPage(body: string, mediaUrl?: string): Promise<{ success: boolean; postId?: string; postUrl?: string; error?: string }> {
+  if (!serverMetaStore || serverMetaStore.status !== 'connected' || !serverMetaStore.page_id) {
+    return { success: false, error: 'Facebook Page is not connected. Please connect via OAuth first.' };
+  }
+
+  let pageToken: string;
+  try {
+    pageToken = decryptToken(serverMetaStore.encrypted_access_token);
+  } catch (err: any) {
+    return { success: false, error: 'Failed to decrypt Facebook Page credentials.' };
+  }
+
+  const pageId = serverMetaStore.page_id;
+
+  try {
+    let endpoint = `https://graph.facebook.com/v19.0/${pageId}/feed`;
+    let payload: Record<string, string> = {
+      message: body,
+      access_token: pageToken,
+    };
+
+    if (mediaUrl) {
+      endpoint = `https://graph.facebook.com/v19.0/${pageId}/photos`;
+      payload = {
+        caption: body,
+        url: mediaUrl,
+        access_token: pageToken,
+      };
+    }
+
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      return { success: false, error: data.error?.message || `Facebook API error (HTTP ${res.status})` };
+    }
+
+    const postId = data.id || data.post_id;
+    return {
+      success: true,
+      postId,
+      postUrl: `https://www.facebook.com/${postId}`,
+    };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Network error publishing to Facebook Page' };
+  }
 }
 
 export function inspectMetaHealth() {
@@ -155,9 +246,13 @@ export function inspectMetaHealth() {
   }
 
   return {
-    connected: true,
+    connected: serverMetaStore.status === 'connected',
     status: serverMetaStore.status,
-    account: sanitizeAccountForClient(serverMetaStore),
+    account: {
+      ...sanitizeAccountForClient(serverMetaStore),
+      pageId: serverMetaStore.page_id,
+      availablePages: serverMetaStore.available_pages,
+    },
     scopes: serverMetaStore.scopes,
     tokenVaultStatus: tokenHealthy ? 'AES-256-GCM Verified' : 'Corrupted',
     tokenExpiresAt: serverMetaStore.token_expires_at,

@@ -5,45 +5,85 @@ export async function GET(req: NextRequest) {
   const origin = req.nextUrl.origin || 'http://localhost:3000';
   const { searchParams } = new URL(req.url);
 
-  const code = searchParams.get('code') || `sandbox_meta_code_${Date.now()}`;
+  const code = searchParams.get('code');
+  const state = searchParams.get('state');
   const format = searchParams.get('format');
   const error = searchParams.get('error');
+  const errorReason = searchParams.get('error_reason');
+  const errorDescription = searchParams.get('error_description');
+  const wantsJson = format === 'json' || req.headers.get('accept')?.includes('application/json');
 
+  // Handle provider cancellation or denial
   if (error) {
-    if (format === 'json' || req.headers.get('accept')?.includes('application/json')) {
-      return NextResponse.json({ success: false, error }, { status: 400 });
+    const errorMsg = errorDescription || errorReason || error;
+    console.warn('Meta OAuth returned error:', errorMsg);
+    if (wantsJson) {
+      return NextResponse.json({ success: false, error: errorMsg }, { status: 400 });
     }
-    return NextResponse.redirect(`${origin}/?meta_error=${encodeURIComponent(error)}`);
+    return NextResponse.redirect(`${origin}/?meta_error=${encodeURIComponent(errorMsg)}`);
+  }
+
+  // Code is required
+  if (!code) {
+    if (wantsJson) {
+      return NextResponse.json(
+        { success: false, error: 'Missing authorization code from Meta OAuth redirect.' },
+        { status: 400 }
+      );
+    }
+    return NextResponse.redirect(`${origin}/?meta_error=missing_code`);
+  }
+
+  // Validate CSRF state
+  const storedState = req.cookies.get('meta_oauth_state')?.value;
+  if (storedState && state && storedState !== state) {
+    console.error('CSRF state mismatch in Meta OAuth callback.');
+    if (wantsJson) {
+      return NextResponse.json(
+        { success: false, error: 'OAuth state validation failed (possible CSRF attempt).' },
+        { status: 403 }
+      );
+    }
+    return NextResponse.redirect(`${origin}/?meta_error=state_mismatch`);
   }
 
   try {
     const account = await exchangeCodeForMetaToken(code, origin);
 
-    if (format === 'json' || req.headers.get('accept')?.includes('application/json')) {
+    if (wantsJson) {
       return NextResponse.json({
         success: true,
-        message: 'Meta Facebook/Instagram Page connected with AES-256-GCM token encryption.',
+        message: 'Facebook Page connected successfully with verified Page Access Token (AES-256-GCM encrypted).',
         account: {
           id: account.id,
           name: account.name,
           handle: account.handle,
           platform: account.platform,
           status: account.status,
+          pageId: account.page_id,
+          availablePages: account.available_pages,
           scopes: account.scopes,
         },
       });
     }
 
-    return NextResponse.redirect(`${origin}/?meta_connected=success`);
+    const response = NextResponse.redirect(
+      `${origin}/?meta_connected=success&page_name=${encodeURIComponent(account.name)}`
+    );
+
+    // Clean up state cookie
+    response.cookies.delete('meta_oauth_state');
+    return response;
   } catch (err: any) {
-    if (format === 'json') {
+    console.error('Meta OAuth callback exchange error:', err);
+    if (wantsJson) {
       return NextResponse.json(
-        { success: false, error: err.message || 'Token exchange failed' },
+        { success: false, error: err.message || 'Meta token exchange failed' },
         { status: 500 }
       );
     }
     return NextResponse.redirect(
-      `${origin}/?meta_error=${encodeURIComponent(err.message || 'Exchange failed')}`
+      `${origin}/?meta_error=${encodeURIComponent(err.message || 'Meta token exchange failed')}`
     );
   }
 }

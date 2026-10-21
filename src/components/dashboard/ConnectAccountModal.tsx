@@ -86,48 +86,16 @@ export default function ConnectAccountModal({
     setTimeout(() => setCopiedUrl(false), 2000);
   };
 
-  const handleInitiateOAuth = async () => {
+  const handleInitiateOAuth = () => {
     setIsLoading(true);
     setTestErrorResult(null);
 
-    try {
-      if (isLinkedIn) {
-        const res = await fetch('/api/auth/linkedin/callback?code=sandbox_auth_code_handshake&format=json');
-        const data = await res.json();
-        
-        if (data.success && data.account) {
-          onToggleConnection(account.id, {
-            status: 'connected',
-            handle: data.account.handle,
-            name: data.account.name,
-            expiresAt: data.account.tokenExpiresAt,
-          });
-          await fetchStatus('/api/auth/linkedin/status');
-        } else {
-          setTestErrorResult(data.error || 'OAuth connection failed.');
-        }
-      } else if (isMeta) {
-        const res = await fetch('/api/auth/meta/callback?code=sandbox_meta_code_handshake&format=json');
-        const data = await res.json();
-
-        if (data.success && data.account) {
-          onToggleConnection(account.id, {
-            status: 'connected',
-            handle: data.account.handle,
-            name: data.account.name,
-          });
-          await fetchStatus('/api/auth/meta/status');
-        } else {
-          setTestErrorResult(data.error || 'Meta connection failed.');
-        }
-      } else {
-        // Toggle mock connection for other platforms
-        onToggleConnection(account.id);
-      }
-    } catch (err: any) {
-      setTestErrorResult(err.message || 'Connection handshake failed.');
-    } finally {
-      setIsLoading(false);
+    if (isLinkedIn) {
+      window.location.href = '/api/auth/linkedin/authorize';
+    } else if (isMeta) {
+      window.location.href = '/api/auth/meta/authorize';
+    } else {
+      window.location.href = `/api/auth/${account.platform}/authorize`;
     }
   };
 
@@ -259,6 +227,40 @@ export default function ConnectAccountModal({
                 </span>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Facebook Page Official Setup Guide */}
+        {account.platform === 'facebook' && (
+          <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-blue-300">
+              <Key className="w-4 h-4 text-blue-400" />
+              <span>Facebook Page Official Setup Guide:</span>
+            </div>
+            <ol className="list-decimal pl-4 space-y-1.5 text-[11px] text-blue-200/90 leading-relaxed">
+              <li>Open <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-blue-300 hover:text-white">developers.facebook.com/apps</a> and click <strong>Create App</strong> &rarr; <strong>Other</strong> &rarr; <strong>Business</strong>.</li>
+              <li>Add the <strong>Facebook Login for Business</strong> product to your app.</li>
+              <li>In Facebook Login Settings, paste the <strong>Redirect URI</strong> below into <em>Valid OAuth Redirect URIs</em>.</li>
+              <li>Under App Settings &rarr; Basic, copy your <strong>App ID</strong> and <strong>App Secret</strong>.</li>
+              <li>Add <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">META_APP_ID</code> and <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">META_APP_SECRET</code> to your <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">.env.local</code> and Vercel Environment Variables.</li>
+              <li>Click <strong>Connect Official OAuth</strong> below to log into Facebook and authorize your Page!</li>
+            </ol>
+          </div>
+        )}
+
+        {/* LinkedIn Official Setup Guide */}
+        {account.platform === 'linkedin' && (
+          <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-blue-300">
+              <Key className="w-4 h-4 text-blue-400" />
+              <span>LinkedIn Official Setup Guide:</span>
+            </div>
+            <ol className="list-decimal pl-4 space-y-1.5 text-[11px] text-blue-200/90 leading-relaxed">
+              <li>Open <a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-blue-300 hover:text-white">linkedin.com/developers/apps</a> and create an app.</li>
+              <li>Under the <strong>Products</strong> tab, request access to: <strong>"Sign In with LinkedIn using OpenID Connect"</strong> and <strong>"Share on LinkedIn"</strong>.</li>
+              <li>Under the <strong>Auth</strong> tab, add the <strong>Redirect URI</strong> below to <em>Authorized redirect URLs for your app</em>.</li>
+              <li>Copy Client ID and Client Secret into your <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">.env.local</code> and Vercel as <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">LINKEDIN_CLIENT_ID</code> and <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">LINKEDIN_CLIENT_SECRET</code>.</li>
+            </ol>
           </div>
         )}
 

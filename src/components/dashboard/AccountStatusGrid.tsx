@@ -124,18 +124,39 @@ export default function AccountStatusGrid({ accounts, onConnectAccount }: Accoun
               </div>
 
               <div className="flex items-center justify-between gap-2 pt-2">
-                <a
-                  href={acc.officialDocUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 flex items-center gap-1 font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded"
-                >
-                  <span>API Docs</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
+                <div className="flex items-center gap-3">
+                  <a
+                    href={acc.officialDocUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 dark:hover:text-indigo-300 flex items-center gap-1 font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none rounded"
+                  >
+                    <span>API Docs</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
+                  <button
+                    onClick={() => onConnectAccount(acc)}
+                    className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 font-medium transition-colors"
+                  >
+                    Setup Guide
+                  </button>
+                </div>
 
                 <button
-                  onClick={() => onConnectAccount(acc)}
+                  onClick={() => {
+                    if (isConnected) {
+                      onConnectAccount(acc);
+                      return;
+                    }
+                    if (acc.platform === 'facebook') {
+                      window.location.href = '/api/auth/meta/authorize';
+                    } else if (acc.platform === 'linkedin') {
+                      window.location.href = '/api/auth/linkedin/authorize';
+                    } else {
+                      onConnectAccount(acc);
+                    }
+                  }}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:outline-none ${
                     isConnected
                       ? 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 dark:hover:bg-slate-700'
