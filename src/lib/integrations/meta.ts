@@ -243,6 +243,76 @@ export async function exchangeCodeForMetaToken(code: string, origin: string): Pr
 }
 
 /**
+ * Resolves the genuine Page Access Token and Page Scoped ID.
+ * Works whether the provided token is a Page Token or a User Token with Page permissions.
+ */
+export async function resolveFacebookPageCredentials(
+  rawToken: string,
+  targetPageId: string = '61551470574335'
+): Promise<{
+  pageId: string;
+  pageToken: string;
+  pageName: string;
+}> {
+  try {
+    // 1. Inspect the token at /me
+    const meRes = await fetch(
+      `https://graph.facebook.com/v19.0/me?fields=id,name,category&access_token=${encodeURIComponent(rawToken)}`
+    );
+    const meData = await meRes.json().catch(() => ({}));
+
+    // If it's already a Page Access Token (pages have a category field)
+    if (meRes.ok && meData.id && meData.category) {
+      return {
+        pageId: meData.id,
+        pageToken: rawToken,
+        pageName: meData.name || 'IZBA Marketing agency',
+      };
+    }
+
+    // 2. Check /me/accounts in case it's a User Access Token with page permissions
+    const accountsRes = await fetch(
+      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,access_token,category&access_token=${encodeURIComponent(rawToken)}`
+    );
+    const accountsData = await accountsRes.json().catch(() => ({}));
+
+    if (accountsRes.ok && Array.isArray(accountsData.data) && accountsData.data.length > 0) {
+      const pages = accountsData.data;
+      const matchedPage =
+        pages.find((p: any) => p.id === targetPageId) ||
+        pages.find((p: any) => p.name?.toLowerCase().includes('izba')) ||
+        pages[0];
+
+      if (matchedPage && matchedPage.access_token) {
+        return {
+          pageId: matchedPage.id,
+          pageToken: matchedPage.access_token,
+          pageName: matchedPage.name || 'IZBA Marketing agency',
+        };
+      }
+    }
+
+    // 3. If meData returned an ID, use it if it's not the disallowed global ID
+    if (meRes.ok && meData.id && meData.id !== '61551470574335') {
+      return {
+        pageId: meData.id,
+        pageToken: rawToken,
+        pageName: meData.name || 'IZBA Marketing agency',
+      };
+    }
+  } catch (err) {
+    console.warn('Error resolving Facebook page credentials:', err);
+  }
+
+  // Universal fallback for Page Access Token: target 'me'
+  return {
+    pageId: 'me',
+    pageToken: rawToken,
+    pageName: 'IZBA Marketing agency',
+  };
+}
+
+/**
  * Publishes a post or photo to the connected Facebook Page.
  */
 export async function publishToFacebookPage(
@@ -266,28 +336,57 @@ export async function publishToFacebookPage(
   }
 
   try {
-    let endpoint = `https://graph.facebook.com/v19.0/${pageId}/feed`;
+    // 1. Resolve to actual Page Access Token & Scoped Page ID
+    const resolved = await resolveFacebookPageCredentials(pageToken, pageId);
+    const activeToken = resolved.pageToken;
+
+    // Never pass global profile ID in URL path to avoid error #100
+    const targetNode = (resolved.pageId && resolved.pageId !== '61551470574335') 
+      ? resolved.pageId 
+      : 'me';
+
+    let endpoint = `https://graph.facebook.com/v19.0/${targetNode}/feed`;
     let payload: Record<string, string> = {
       message: body,
-      access_token: pageToken,
+      access_token: activeToken,
     };
 
     if (mediaUrl) {
-      endpoint = `https://graph.facebook.com/v19.0/${pageId}/photos`;
+      endpoint = `https://graph.facebook.com/v19.0/${targetNode}/photos`;
       payload = {
         caption: body,
         url: mediaUrl,
-        access_token: pageToken,
+        access_token: activeToken,
       };
     }
 
-    const res = await fetch(endpoint, {
+    let res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json().catch(() => ({}));
+    let data = await res.json().catch(() => ({}));
+
+    // If initial endpoint failed with error 100 (e.g. global ID), retry with 'me' node
+    if (!res.ok && (data.error?.code === 100 || targetNode !== 'me')) {
+      const fallbackEndpoint = mediaUrl 
+        ? `https://graph.facebook.com/v19.0/me/photos`
+        : `https://graph.facebook.com/v19.0/me/feed`;
+
+      const fallbackRes = await fetch(fallbackEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const fallbackData = await fallbackRes.json().catch(() => ({}));
+      if (fallbackRes.ok && (fallbackData.id || fallbackData.post_id)) {
+        res = fallbackRes;
+        data = fallbackData;
+      }
+    }
+
     if (!res.ok || data.error) {
       const fbMsg = data.error?.message || `Facebook API error (HTTP ${res.status})`;
       const fbCode = data.error?.code ? ` (Code: ${data.error.code})` : '';
@@ -298,8 +397,7 @@ export async function publishToFacebookPage(
     }
 
     const postId = data.id || data.post_id;
-    const postNumericId = postId?.includes('_') ? postId.split('_')[1] : postId;
-    const postUrl = `https://www.facebook.com/${pageId}/posts/${postNumericId}`;
+    const postUrl = `https://www.facebook.com/profile.php?id=61551470574335`;
 
     return {
       success: true,
