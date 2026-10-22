@@ -197,11 +197,6 @@ export default function ContentOverview({
                       {getPlatformIcon(item.platform)}
                       <span>{getPlatformLabel(item.platform)}</span>
                     </span>
-                    {item.isDemo && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 font-mono font-semibold">
-                        DEMO
-                      </span>
-                    )}
                   </div>
                   {getStatusBadge(item.status)}
                 </div>

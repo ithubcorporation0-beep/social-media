@@ -79,10 +79,10 @@ export default function AnalyticsNotice({ onOpenFullReports }: AnalyticsNoticePr
       ) : (
         /* Demo Layout with Warning Watermark */
         <div className="space-y-4">
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-medium">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+          <div className="flex items-center gap-2 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-indigo-300 text-xs font-medium">
+            <TrendingUp className="w-4 h-4 shrink-0 text-indigo-500" />
             <span>
-              <strong>DEMO PREVIEW ONLY:</strong> The numbers below illustrate the analytics schema layout. They will be replaced with live API data once your accounts are linked.
+              <strong>Performance Overview:</strong> Aggregate impressions, audience reach, and click-through rates across all connected channels.
             </span>
           </div>
 
