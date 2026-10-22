@@ -242,6 +242,49 @@ export async function exchangeCodeForMetaToken(code: string, origin: string): Pr
   return account;
 }
 
+export async function checkFacebookTokenPermissions(rawToken: string): Promise<{
+  granted: string[];
+  missingManagePosts: boolean;
+}> {
+  try {
+    const permRes = await fetch(
+      `https://graph.facebook.com/v19.0/me/permissions?access_token=${encodeURIComponent(rawToken)}`
+    );
+    const permData = await permRes.json().catch(() => ({}));
+    if (permRes.ok && Array.isArray(permData.data)) {
+      const granted = permData.data
+        .filter((p: any) => p.status === 'granted')
+        .map((p: any) => p.permission);
+      return {
+        granted,
+        missingManagePosts: !granted.includes('pages_manage_posts'),
+      };
+    }
+  } catch (err) {
+    console.warn('Could not inspect permissions:', err);
+  }
+  return { granted: [], missingManagePosts: false };
+}
+
+export async function getFacebookManagedPages(rawToken: string): Promise<Array<{ id: string; name: string; category?: string }>> {
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v19.0/me/accounts?fields=id,name,category&access_token=${encodeURIComponent(rawToken)}`
+    );
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && Array.isArray(data.data)) {
+      return data.data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        category: p.category,
+      }));
+    }
+  } catch (err) {
+    console.error('Error fetching Facebook managed pages:', err);
+  }
+  return [];
+}
+
 /**
  * Resolves the genuine Page Access Token and Page Scoped ID.
  * Works whether the provided token is a Page Token or a User Token with Page permissions.

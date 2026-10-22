@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { 
   getEffectiveFacebookCredentials, 
   setCustomFacebookPageCredentials, 
-  clearCustomFacebookCredentials 
+  clearCustomFacebookCredentials,
+  checkFacebookTokenPermissions,
+  getFacebookManagedPages
 } from '@/lib/integrations/meta';
 import fs from 'fs';
 import path from 'path';
@@ -44,35 +46,45 @@ export async function POST(req: NextRequest) {
 
     // 1. Verify token live with Meta Graph API
     let metaPageName = 'IZBA Marketing agency';
-    try {
-      const verifyRes = await fetch(
-        `https://graph.facebook.com/v19.0/${targetPageId}?fields=id,name,category&access_token=${trimmedToken}`
-      );
-      const verifyData = await verifyRes.json();
+    let availablePages: any[] = [];
+    let missingManagePosts = false;
 
-      if (!verifyRes.ok || verifyData.error) {
-        // If query by page id failed, try /me to see what token this is
-        const meRes = await fetch(
-          `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${trimmedToken}`
+    try {
+      // Check permissions
+      const permCheck = await checkFacebookTokenPermissions(trimmedToken);
+      missingManagePosts = permCheck.missingManagePosts;
+
+      // Get user's managed pages
+      availablePages = await getFacebookManagedPages(trimmedToken);
+
+      const meRes = await fetch(
+        `https://graph.facebook.com/v19.0/me?fields=id,name&access_token=${trimmedToken}`
+      );
+      const meData = await meRes.json();
+      if (!meRes.ok || meData.error) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `Facebook Token Rejected: ${meData.error?.message || 'Invalid access token'}` 
+          },
+          { status: 400 }
         );
-        const meData = await meRes.json();
-        if (!meRes.ok || meData.error) {
-          const errMsg = verifyData.error?.message || meData.error?.message || 'Meta Graph API rejected this access token.';
-          return NextResponse.json(
-            { 
-              success: false, 
-              error: `Facebook Token Verification Failed: ${errMsg}` 
-            },
-            { status: 400 }
-          );
-        }
-        metaPageName = meData.name || metaPageName;
-      } else {
-        metaPageName = verifyData.name || metaPageName;
       }
+      metaPageName = meData.name || metaPageName;
     } catch (networkErr: any) {
-      // If offline/no internet during test, allow saving with notice
       console.warn('Network check skipped:', networkErr.message);
+    }
+
+    if (missingManagePosts) {
+      return NextResponse.json(
+        {
+          success: false,
+          missingPermission: 'pages_manage_posts',
+          availablePages,
+          error: "Permission Missing: 'pages_manage_posts'. In Graph API Explorer under Permissions, add 'pages_manage_posts' and click Generate Access Token.",
+        },
+        { status: 400 }
+      );
     }
 
     // 2. Set runtime memory token
