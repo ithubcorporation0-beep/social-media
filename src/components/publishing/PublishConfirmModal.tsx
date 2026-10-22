@@ -76,7 +76,7 @@ export default function PublishConfirmModal({
             item.platform === 'x'
               ? 'https://x.com/status'
               : item.platform === 'facebook'
-              ? 'https://facebook.com/page'
+              ? 'https://www.facebook.com/profile.php?id=61551470574335'
               : item.platform === 'tiktok'
               ? 'https://www.tiktok.com/@creator/video/1029384756'
               : 'https://instagram.com';
