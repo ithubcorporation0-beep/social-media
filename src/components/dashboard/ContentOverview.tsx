@@ -27,7 +27,8 @@ import {
   FacebookIcon,
   InstagramIcon,
   YouTubeIcon,
-  XTwitterIcon
+  XTwitterIcon,
+  TikTokIcon
 } from '@/components/icons/PlatformIcons';
 
 interface ContentOverviewProps {
@@ -125,6 +126,7 @@ export default function ContentOverview({
       case 'instagram': return <InstagramIcon className="w-3.5 h-3.5 text-pink-500" />;
       case 'youtube': return <YouTubeIcon className="w-3.5 h-3.5 text-red-500" />;
       case 'x': return <XTwitterIcon className="w-3.5 h-3.5 text-slate-800 dark:text-slate-300" />;
+      case 'tiktok': return <TikTokIcon className="w-3.5 h-3.5 text-slate-900 dark:text-white" />;
       default: return <FileText className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />;
     }
   };
@@ -136,7 +138,9 @@ export default function ContentOverview({
       case 'instagram': return 'Instagram';
       case 'youtube': return 'YouTube';
       case 'x': return 'X';
+      case 'tiktok': return 'TikTok';
       case 'adzuna': return 'Adzuna';
+      default: return platform;
     }
   };
 

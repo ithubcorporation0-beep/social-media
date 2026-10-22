@@ -20,7 +20,8 @@ import {
   FacebookIcon,
   InstagramIcon,
   YouTubeIcon,
-  XTwitterIcon
+  XTwitterIcon,
+  TikTokIcon
 } from '@/components/icons/PlatformIcons';
 
 interface EngagementHubProps {
@@ -48,6 +49,7 @@ export default function EngagementHub({ interactions, onSendReply }: EngagementH
       case 'instagram': return <InstagramIcon className="w-4 h-4 text-pink-400" />;
       case 'youtube': return <YouTubeIcon className="w-4 h-4 text-red-500" />;
       case 'x': return <XTwitterIcon className="w-4 h-4 text-slate-300" />;
+      case 'tiktok': return <TikTokIcon className="w-4 h-4 text-slate-900 dark:text-white" />;
       default: return <MessageSquare className="w-4 h-4 text-slate-400" />;
     }
   };
@@ -117,6 +119,7 @@ export default function EngagementHub({ interactions, onSendReply }: EngagementH
             { id: 'instagram', label: 'Instagram' },
             { id: 'youtube', label: 'YouTube' },
             { id: 'x', label: 'X' },
+            { id: 'tiktok', label: 'TikTok' },
           ].map((tab) => (
             <button
               key={tab.id}

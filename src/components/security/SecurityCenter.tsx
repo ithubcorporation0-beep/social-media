@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 CREATE TABLE IF NOT EXISTS public.social_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  platform TEXT NOT NULL CHECK (platform IN ('linkedin', 'facebook', 'instagram', 'youtube', 'x', 'adzuna')),
+  platform TEXT NOT NULL CHECK (platform IN ('linkedin', 'facebook', 'instagram', 'youtube', 'x', 'tiktok', 'adzuna')),
   account_name TEXT NOT NULL,
   account_handle TEXT,
   account_type TEXT DEFAULT 'profile',

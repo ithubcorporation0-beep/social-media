@@ -25,7 +25,8 @@ import {
   FacebookIcon,
   InstagramIcon,
   YouTubeIcon,
-  XTwitterIcon
+  XTwitterIcon,
+  TikTokIcon
 } from '@/components/icons/PlatformIcons';
 
 interface CalendarViewProps {
@@ -102,6 +103,7 @@ export default function CalendarView({
       case 'instagram': return <InstagramIcon className="w-3.5 h-3.5 text-pink-400" />;
       case 'youtube': return <YouTubeIcon className="w-3.5 h-3.5 text-red-500" />;
       case 'x': return <XTwitterIcon className="w-3.5 h-3.5 text-slate-300" />;
+      case 'tiktok': return <TikTokIcon className="w-3.5 h-3.5 text-slate-900 dark:text-white" />;
       default: return <FileText className="w-3.5 h-3.5 text-slate-400" />;
     }
   };

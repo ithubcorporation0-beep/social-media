@@ -77,6 +77,8 @@ export default function PublishConfirmModal({
               ? 'https://x.com/status'
               : item.platform === 'facebook'
               ? 'https://facebook.com/page'
+              : item.platform === 'tiktok'
+              ? 'https://www.tiktok.com/@creator/video/1029384756'
               : 'https://instagram.com';
 
           onPublishSuccess(item.id, dummyExternalUrl);

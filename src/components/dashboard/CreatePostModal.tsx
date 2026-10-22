@@ -58,6 +58,11 @@ export default function CreatePostModal({
       setBody(
         'Swipe through to see how SocialHub AI handles OAuth token exchanges without exposing client secrets! 🚀\n\nDrop a comment if you want the open-source blueprint.'
       );
+    } else if (platform === 'tiktok') {
+      setTitle('60s Tech Breakdown: Zero-Leak OAuth in Next.js');
+      setBody(
+        'Quick engineering breakdown: How to isolate third-party OAuth access tokens on the server without ever exposing them to client components! 🔐✨\n\n#WebDev #Nextjs #CyberSecurity #CodingTips #TechTok'
+      );
     } else {
       setTitle('New Feature Preview');
       setBody('Testing verified API publishing pipeline. Official OAuth integration active and healthy.');
@@ -120,8 +125,8 @@ export default function CreatePostModal({
           {/* Target Platform Selector */}
           <div className="space-y-1.5">
             <label className="font-semibold text-slate-300">Target Platform</label>
-            <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
-              {(['linkedin', 'facebook', 'instagram', 'youtube', 'x'] as PlatformId[]).map((p) => (
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {(['linkedin', 'facebook', 'instagram', 'youtube', 'x', 'tiktok'] as PlatformId[]).map((p) => (
                 <button
                   type="button"
                   key={p}

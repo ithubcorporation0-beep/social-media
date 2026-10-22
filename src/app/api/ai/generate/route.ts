@@ -38,6 +38,7 @@ Platform specific rules:
 - Instagram: Engaging first line, conversational story, spaced paragraphs, relevant hashtag block (8-12 tags).
 - Facebook: Friendly community tone, encourage discussion, question at the end.
 - YouTube: Engaging video title, structured description with key takeaways, timestamps placeholders, and tags.
+- TikTok: Ultra-catchy 3-second hook, fast-paced concise script, call-to-action for comments/follows, trending hashtags (#FYP #TechTok).
 
 Generate structured, ready-to-publish content based on the user topic.`;
 
@@ -135,6 +136,9 @@ function generateSmartContent(
     if (platform === 'instagram') {
       return `#${cleanTopic} #TechTips #ContentCreation #DigitalStrategy #ProductivityHacks #Innovation #${cleanTopic}Community #CareerJourney #DailyInspiration #GrowthMindset`;
     }
+    if (platform === 'tiktok') {
+      return `#${cleanTopic} #TechTok #LearnOnTikTok #DeveloperLife #FYP #CodingTips #TechHacks`;
+    }
     return `#${cleanTopic} #Leadership #Productivity #Technology #ProfessionalDevelopment`;
   }
 
@@ -199,6 +203,10 @@ In this video, we break down everything you need to know about ${topic}. From fo
 
   if (platform === 'instagram') {
     return `Everything you need to know about ${topic} in one glance 🚀\n\nWhen we started out, we thought more tools meant better results. The truth? A simplified, focused workflow wins every single time.\n\nSwipe through the carousel for the 3-step breakdown 📲\n\nSave this post for your next planning session!\n\n#${topic.replace(/\s+/g, '')} #ProductivityTips #ContentCreator #DigitalStrategy #TechWorkflow`;
+  }
+
+  if (platform === 'tiktok') {
+    return `POV: You finally stopped overcomplicating ${topic} 👀\n\nHere are 3 fast rules you need to know:\n1. Keep it minimal\n2. Automate repetitive steps\n3. Protect your focus\n\nSave this for later & drop a comment if you want part 2! 🔥\n\n#${topic.replace(/\s+/g, '')} #TechTok #CodingTips #FYP #Productivity`;
   }
 
   return `Here is a complete breakdown of ${topic} and why it matters right now:\n\nWhether you are an independent creator or building within an engineering team, having a disciplined framework for ${topic} saves hours of wasted effort.\n\nKey takeaways:\n• Streamlined workflow\n• Verified consistency\n• Continuous feedback loops\n\nWhat has been your experience with this? Share your thoughts below!`;

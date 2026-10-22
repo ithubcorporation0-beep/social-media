@@ -105,8 +105,8 @@ export default function EditPostModal({
           {/* Platform */}
           <div className="space-y-1.5">
             <label className="font-semibold text-slate-300">Target Social Platform</label>
-            <div className="grid grid-cols-5 gap-2">
-              {(['linkedin', 'facebook', 'instagram', 'youtube', 'x'] as PlatformId[]).map((p) => (
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {(['linkedin', 'facebook', 'instagram', 'youtube', 'x', 'tiktok'] as PlatformId[]).map((p) => (
                 <button
                   type="button"
                   key={p}

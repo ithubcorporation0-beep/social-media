@@ -70,6 +70,7 @@ export default function ConnectAccountModal({
 
   const isLinkedIn = account.platform === 'linkedin';
   const isMeta = account.platform === 'facebook' || account.platform === 'instagram';
+  const isTikTok = account.platform === 'tiktok';
   const isAdzuna = account.platform === 'adzuna';
   const isConnected = account.status === 'connected' || statusReport?.connected;
 
@@ -161,6 +162,8 @@ export default function ConnectAccountModal({
                 ? 'bg-blue-500/10 border border-blue-500/20 text-blue-400' 
                 : isMeta
                 ? 'bg-blue-600/10 border border-blue-600/20 text-blue-500'
+                : isTikTok
+                ? 'bg-slate-800 border border-slate-700 text-white'
                 : 'bg-indigo-500/10 border border-indigo-500/20 text-indigo-400'
             }`}>
               <Key className="w-5 h-5" />
@@ -171,7 +174,7 @@ export default function ConnectAccountModal({
                   {account.name}
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  {isLinkedIn ? 'Phase 1 Active' : isMeta ? 'Phase 2 Ready' : 'Official API'}
+                  {isLinkedIn ? 'Phase 1 Active' : isMeta ? 'Phase 2 Ready' : isTikTok ? 'Content API V2' : 'Official API'}
                 </span>
               </div>
               <p className="text-xs text-slate-400">Official OAuth 2.0 Integration & Key Vault</p>
@@ -260,6 +263,22 @@ export default function ConnectAccountModal({
               <li>Under the <strong>Products</strong> tab, request access to: <strong>"Sign In with LinkedIn using OpenID Connect"</strong> and <strong>"Share on LinkedIn"</strong>.</li>
               <li>Under the <strong>Auth</strong> tab, add the <strong>Redirect URI</strong> below to <em>Authorized redirect URLs for your app</em>.</li>
               <li>Copy Client ID and Client Secret into your <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">.env.local</code> and Vercel as <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">LINKEDIN_CLIENT_ID</code> and <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">LINKEDIN_CLIENT_SECRET</code>.</li>
+            </ol>
+          </div>
+        )}
+
+        {/* TikTok Official Setup Guide */}
+        {account.platform === 'tiktok' && (
+          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-700/60 text-xs text-slate-200 space-y-2">
+            <div className="flex items-center gap-1.5 font-bold text-slate-100">
+              <Key className="w-4 h-4 text-slate-300" />
+              <span>TikTok for Developers Setup Guide:</span>
+            </div>
+            <ol className="list-decimal pl-4 space-y-1.5 text-[11px] text-slate-300 leading-relaxed">
+              <li>Open <a href="https://developers.tiktok.com/" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-indigo-400 hover:text-white">developers.tiktok.com</a> and register your developer account.</li>
+              <li>Under <strong>My Apps</strong>, create a new app and enable <strong>Login Kit</strong> and <strong>Content Posting API</strong>.</li>
+              <li>Under Redirect Domains, add your domain and the <strong>Redirect URI</strong> below to your TikTok app console.</li>
+              <li>Configure <code className="bg-slate-950 px-1 py-0.5 rounded text-indigo-300 font-mono">TIKTOK_CLIENT_KEY</code> and <code className="bg-slate-950 px-1 py-0.5 rounded text-indigo-300 font-mono">TIKTOK_CLIENT_SECRET</code> in your local environment.</li>
             </ol>
           </div>
         )}

@@ -27,7 +27,8 @@ import {
   FacebookIcon, 
   InstagramIcon, 
   YouTubeIcon, 
-  XIcon 
+  XIcon,
+  TikTokIcon 
 } from '@/components/icons/PlatformIcons';
 
 interface AnalyticsReportsProps {
@@ -77,6 +78,7 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
       case 'instagram': return <InstagramIcon className="w-4 h-4 text-pink-500" />;
       case 'youtube': return <YouTubeIcon className="w-4 h-4 text-red-500" />;
       case 'x': return <XIcon className="w-3.5 h-3.5 text-slate-800 dark:text-slate-100" />;
+      case 'tiktok': return <TikTokIcon className="w-4 h-4 text-slate-900 dark:text-white" />;
       default: return <Share2 className="w-4 h-4 text-slate-400" />;
     }
   };
@@ -198,6 +200,7 @@ export default function AnalyticsReports({ analyticsItems, accounts }: Analytics
               <option value="instagram">Instagram</option>
               <option value="youtube">YouTube</option>
               <option value="x">X (Twitter)</option>
+              <option value="tiktok">TikTok</option>
             </select>
           </div>
         </div>

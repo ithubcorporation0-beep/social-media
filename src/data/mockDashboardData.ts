@@ -153,6 +153,17 @@ export const initialContentItems: ContentItem[] = [
     isDemo: true,
     errorMessage: 'X API v2: Write limit reached (17/24h on free tier). Retry scheduled automatically.',
   },
+  {
+    id: 'item-7',
+    title: '60-Second Architecture: OAuth Token Vaulting in Next.js',
+    body: 'How to keep your client bundle 100% secret-free with AES-256-GCM server-side vaults. Follow for daily tech engineering breakdowns! #Nextjs #WebDev #CyberSecurity #CodingTips',
+    platform: 'tiktok',
+    status: 'draft',
+    createdAt: '2026-10-21T07:00:00Z',
+    tags: ['Nextjs', 'CyberSecurity', 'WebDev', 'TechTok'],
+    charCount: 185,
+    isDemo: true,
+  },
 ];
 
 export const initialInteractions: SocialInteraction[] = [
@@ -214,6 +225,20 @@ export const initialInteractions: SocialInteraction[] = [
     requiredPermission: 'youtube.force-ssl',
     isDemo: true,
   },
+  {
+    id: 'inter-5',
+    platform: 'tiktok',
+    authorName: 'Alex River',
+    authorHandle: '@alex_dev_tok',
+    postTitle: '60-Second Architecture: OAuth Token Vaulting',
+    postSnippet: 'How to keep your client bundle 100% secret-free with AES-256-GCM...',
+    commentText: 'This is super clean. Are you using native web crypto API or Node crypto for the GCM cipher?',
+    timestamp: '45 mins ago',
+    status: 'pending_reply',
+    supportedByApi: true,
+    requiredPermission: 'video.publish & user.info.basic',
+    isDemo: true,
+  },
 ];
 
 export const initialNotifications: SystemNotification[] = [
@@ -251,6 +276,15 @@ export const initialNotifications: SystemNotification[] = [
     timestamp: '5 hours ago',
     read: true,
     platform: 'x',
+  },
+  {
+    id: 'notif-5',
+    title: 'TikTok API Specs Initialized',
+    message: 'TikTok Login Kit & Content Posting API scope profile configured (@awaiting-audit).',
+    type: 'info',
+    timestamp: '2 hours ago',
+    read: false,
+    platform: 'tiktok',
   },
 ];
 

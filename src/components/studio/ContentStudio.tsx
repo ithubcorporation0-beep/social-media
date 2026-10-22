@@ -24,7 +24,8 @@ import {
   FacebookIcon,
   InstagramIcon,
   YouTubeIcon,
-  XTwitterIcon
+  XTwitterIcon,
+  TikTokIcon
 } from '@/components/icons/PlatformIcons';
 
 interface ContentStudioProps {
@@ -245,13 +246,14 @@ export default function ContentStudio({ onSaveToPipeline }: ContentStudioProps) 
             {/* Target Platform */}
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-slate-300">Target Social Platform</label>
-              <div className="grid grid-cols-5 gap-1.5">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                 {[
                   { id: 'linkedin', label: 'LinkedIn', icon: LinkedInIcon },
                   { id: 'facebook', label: 'Facebook', icon: FacebookIcon },
                   { id: 'instagram', label: 'Instagram', icon: InstagramIcon },
                   { id: 'youtube', label: 'YouTube', icon: YouTubeIcon },
                   { id: 'x', label: 'X', icon: XTwitterIcon },
+                  { id: 'tiktok', label: 'TikTok', icon: TikTokIcon },
                 ].map((item) => {
                   const Icon = item.icon;
                   const isSelected = platform === item.id;

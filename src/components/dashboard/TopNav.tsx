@@ -50,6 +50,7 @@ export default function TopNav({
     { id: 'instagram', label: 'Instagram' },
     { id: 'youtube', label: 'YouTube' },
     { id: 'x', label: 'X' },
+    { id: 'tiktok', label: 'TikTok' },
     { id: 'adzuna', label: 'Adzuna Jobs' },
   ];
 

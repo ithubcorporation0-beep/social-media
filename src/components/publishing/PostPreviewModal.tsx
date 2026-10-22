@@ -14,14 +14,17 @@ import {
   MoreHorizontal, 
   Globe2, 
   ExternalLink,
-  Sparkles
+  Sparkles,
+  Music,
+  Plus
 } from 'lucide-react';
 import {
   LinkedInIcon,
   FacebookIcon,
   InstagramIcon,
   YouTubeIcon,
-  XTwitterIcon
+  XTwitterIcon,
+  TikTokIcon
 } from '@/components/icons/PlatformIcons';
 
 interface PostPreviewModalProps {
@@ -70,6 +73,7 @@ export default function PostPreviewModal({
             { id: 'facebook', label: 'Facebook', icon: FacebookIcon },
             { id: 'instagram', label: 'Instagram', icon: InstagramIcon },
             { id: 'x', label: 'X (Twitter)', icon: XTwitterIcon },
+            { id: 'tiktok', label: 'TikTok', icon: TikTokIcon },
           ].map((tab) => {
             const Icon = tab.icon;
             const isSelected = previewPlatform === tab.id;
@@ -247,6 +251,87 @@ export default function PostPreviewModal({
                 <button className="flex items-center gap-1.5 hover:text-blue-500">
                   <Share className="w-4 h-4" /> <span>Share</span>
                 </button>
+              </div>
+            </div>
+          )}
+
+          {/* TikTok Vertical Video Feed Mockup */}
+          {previewPlatform === 'tiktok' && (
+            <div className="w-full max-w-[320px] aspect-[9/16] bg-black rounded-2xl border border-slate-800 relative overflow-hidden shadow-2xl flex flex-col justify-between p-4 text-white font-sans">
+              {/* Background gradient simulating video content */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-indigo-950/40 to-black/90 pointer-events-none" />
+
+              {/* Center Video Content Cue */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center z-10 pointer-events-none">
+                <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center mb-3">
+                  <Sparkles className="w-6 h-6 text-cyan-400 animate-pulse" />
+                </div>
+                <p className="text-xs font-bold text-white tracking-wide uppercase">9:16 Video Canvas</p>
+                <span className="text-[10px] text-slate-400 mt-1 max-w-[200px] truncate">{item.title}</span>
+              </div>
+
+              {/* Top Navigation */}
+              <div className="relative z-20 flex items-center justify-center gap-5 pt-1 text-xs font-semibold">
+                <span className="text-slate-400">Following</span>
+                <span className="text-white border-b-2 border-white pb-0.5">For You</span>
+              </div>
+
+              {/* Bottom & Right Overlay */}
+              <div className="relative z-20 flex items-end justify-between gap-3 pb-1">
+                {/* Left Bottom Info */}
+                <div className="space-y-2 flex-1 min-w-0 pr-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-white hover:underline cursor-pointer">@socialhub_creator</span>
+                    <span className="w-3.5 h-3.5 rounded-full bg-cyan-400 text-black text-[9px] font-bold flex items-center justify-center">✓</span>
+                  </div>
+                  <p className="text-xs text-slate-200 leading-snug line-clamp-3">
+                    {item.body}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-slate-300">
+                    <Music className="w-3 h-3 text-cyan-400 shrink-0" />
+                    <span className="truncate">♫ Original audio - SocialHub AI Studio</span>
+                  </div>
+                </div>
+
+                {/* Right Action Icons Column */}
+                <div className="flex flex-col items-center gap-3.5 shrink-0">
+                  <div className="relative">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-400 to-indigo-500 border border-white/40 flex items-center justify-center font-bold text-xs text-white">
+                      SH
+                    </div>
+                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-rose-500 text-white flex items-center justify-center text-[10px] font-bold">
+                      <Plus className="w-3 h-3" />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">
+                      <Heart className="w-6 h-6 hover:text-rose-500" />
+                    </button>
+                    <span className="text-[10px] font-semibold text-slate-300">24.5K</span>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">
+                      <MessageSquare className="w-6 h-6" />
+                    </button>
+                    <span className="text-[10px] font-semibold text-slate-300">842</span>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">
+                      <Bookmark className="w-6 h-6" />
+                    </button>
+                    <span className="text-[10px] font-semibold text-slate-300">3.1K</span>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <button className="p-2 rounded-full hover:bg-white/10 text-white transition-colors">
+                      <Share className="w-6 h-6" />
+                    </button>
+                    <span className="text-[10px] font-semibold text-slate-300">1.4K</span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
