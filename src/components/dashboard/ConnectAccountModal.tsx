@@ -37,6 +37,11 @@ export default function ConnectAccountModal({
   const [statusReport, setStatusReport] = useState<any>(null);
   const [testErrorResult, setTestErrorResult] = useState<string | null>(null);
 
+  // Facebook direct Page token state
+  const [fbTokenInput, setFbTokenInput] = useState('');
+  const [isSavingFbToken, setIsSavingFbToken] = useState(false);
+  const [fbTokenStatus, setFbTokenStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
   // Fetch live backend status when opened
   useEffect(() => {
     if (isOpen && account) {
@@ -51,8 +56,43 @@ export default function ConnectAccountModal({
     } else {
       setStatusReport(null);
       setTestErrorResult(null);
+      setFbTokenStatus(null);
+      setFbTokenInput('');
     }
   }, [isOpen, account?.platform]);
+
+  const handleSaveFbToken = async () => {
+    if (!fbTokenInput.trim()) return;
+    setIsSavingFbToken(true);
+    setFbTokenStatus(null);
+    try {
+      const res = await fetch('/api/social/facebook/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: fbTokenInput.trim(), pageId: '61551470574335' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFbTokenStatus({ type: 'success', text: data.message });
+        if (account) {
+          onToggleConnection(account.id, {
+            status: 'connected',
+            name: data.pageName || 'IZBA Marketing agency',
+            handle: `@page_${data.pageId || '61551470574335'}`,
+            connectedAt: new Date().toISOString(),
+          });
+        }
+        await fetchStatus('/api/auth/meta/status');
+        setFbTokenInput('');
+      } else {
+        setFbTokenStatus({ type: 'error', text: data.error || 'Verification failed.' });
+      }
+    } catch (e: any) {
+      setFbTokenStatus({ type: 'error', text: e.message || 'Network error' });
+    } finally {
+      setIsSavingFbToken(false);
+    }
+  };
 
   const fetchStatus = async (endpoint: string) => {
     try {
@@ -233,21 +273,76 @@ export default function ConnectAccountModal({
           </div>
         )}
 
-        {/* Facebook Page Official Setup Guide */}
+        {/* Facebook Page Official Setup Guide & Direct Token Option */}
         {account.platform === 'facebook' && (
-          <div className="p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-200 space-y-2">
-            <div className="flex items-center gap-1.5 font-bold text-blue-300">
-              <Key className="w-4 h-4 text-blue-400" />
-              <span>Facebook Page Official Setup Guide:</span>
+          <div className="space-y-3">
+            {/* Direct Page Access Token Input (Fast 60s setup) */}
+            <div className="p-3.5 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-xs space-y-2.5">
+              <div className="flex items-center gap-1.5 font-bold text-indigo-300">
+                <Sparkles className="w-4 h-4 text-indigo-400" />
+                <span>Fast Direct Connect (Page Access Token):</span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                If you already manage <strong>IZBA Marketing agency</strong> (Page ID: <code>61551470574335</code>), paste your Facebook Page Access Token below to connect instantly without creating an OAuth app:
+              </p>
+
+              <div className="flex gap-2">
+                <input
+                  type="password"
+                  value={fbTokenInput}
+                  onChange={(e) => setFbTokenInput(e.target.value)}
+                  placeholder="Paste Page Access Token (starts with EAA...)"
+                  className="flex-1 bg-slate-900 border border-white/15 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+                />
+                <button
+                  type="button"
+                  onClick={handleSaveFbToken}
+                  disabled={isSavingFbToken || !fbTokenInput.trim()}
+                  className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 transition-colors"
+                >
+                  {isSavingFbToken ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                  <span>Verify & Connect</span>
+                </button>
+              </div>
+
+              {fbTokenStatus && (
+                <p className={`text-[11px] font-medium leading-relaxed ${fbTokenStatus.type === 'success' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {fbTokenStatus.text}
+                </p>
+              )}
+
+              <p className="text-[10px] text-slate-400">
+                Need a token? Generate one in 30 seconds at{' '}
+                <a
+                  href="https://developers.facebook.com/tools/explorer/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-400 underline font-semibold hover:text-white"
+                >
+                  Meta Graph API Explorer
+                </a>{' '}
+                by selecting <strong>IZBA Marketing agency</strong> with <code>pages_manage_posts</code> permission.
+              </p>
             </div>
-            <ol className="list-decimal pl-4 space-y-1.5 text-[11px] text-blue-200/90 leading-relaxed">
-              <li>Open <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-blue-300 hover:text-white">developers.facebook.com/apps</a> and click <strong>Create App</strong> &rarr; <strong>Other</strong> &rarr; <strong>Business</strong>.</li>
-              <li>Add the <strong>Facebook Login for Business</strong> product to your app.</li>
-              <li>In Facebook Login Settings, paste the <strong>Redirect URI</strong> below into <em>Valid OAuth Redirect URIs</em>.</li>
-              <li>Under App Settings &rarr; Basic, copy your <strong>App ID</strong> and <strong>App Secret</strong>.</li>
-              <li>Add <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">META_APP_ID</code> and <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">META_APP_SECRET</code> to your <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">.env.local</code> and Vercel Environment Variables.</li>
-              <li>Click <strong>Connect Official OAuth</strong> below to log into Facebook and authorize your Page!</li>
-            </ol>
+
+            {/* Traditional Multi-User OAuth Guide */}
+            <details className="p-3 rounded-xl bg-blue-500/5 border border-blue-500/15 text-xs text-blue-200 group">
+              <summary className="font-semibold text-blue-300 cursor-pointer flex items-center justify-between text-[11px]">
+                <span className="flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-blue-400" />
+                  Or Configure Full Meta OAuth App (Enterprise multi-user flow)
+                </span>
+                <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <ol className="list-decimal pl-4 mt-2 space-y-1.5 text-[11px] text-blue-200/90 leading-relaxed">
+                <li>Open <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer" className="underline font-semibold text-blue-300 hover:text-white">developers.facebook.com/apps</a> and click <strong>Create App</strong> &rarr; <strong>Other</strong> &rarr; <strong>Business</strong>.</li>
+                <li>Add the <strong>Facebook Login for Business</strong> product to your app.</li>
+                <li>In Facebook Login Settings, paste the <strong>Redirect URI</strong> below into <em>Valid OAuth Redirect URIs</em>.</li>
+                <li>Under App Settings &rarr; Basic, copy your <strong>App ID</strong> and <strong>App Secret</strong>.</li>
+                <li>Add <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">META_APP_ID</code> and <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">META_APP_SECRET</code> to your <code className="bg-slate-900 px-1 py-0.5 rounded text-white font-mono">.env.local</code>.</li>
+                <li>Click <strong>Connect Official OAuth</strong> below to log into Facebook and authorize your Page!</li>
+              </ol>
+            </details>
           </div>
         )}
 

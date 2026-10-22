@@ -146,22 +146,20 @@ export default function DashboardPage() {
         const res = await fetch('/api/auth/meta/status');
         if (res.ok) {
           const data = await res.json();
-          if (data.connected && data.account) {
-            setAccounts((prev) =>
-              prev.map((acc) =>
-                acc.platform === 'facebook'
-                  ? {
-                      ...acc,
-                      status: 'connected',
-                      name: data.account.name || acc.name,
-                      handle: data.account.handle || acc.handle,
-                      connectedAt: data.account.connectedAt,
-                      expiresAt: data.account.expiresAt,
-                    }
-                  : acc
-              )
-            );
-          }
+          setAccounts((prev) =>
+            prev.map((acc) =>
+              acc.platform === 'facebook'
+                ? {
+                    ...acc,
+                    status: data.connected ? 'connected' : 'disconnected',
+                    name: data.account?.name || acc.name,
+                    handle: data.account?.handle || acc.handle,
+                    connectedAt: data.account?.connectedAt,
+                    expiresAt: data.account?.expiresAt,
+                  }
+                : acc
+            )
+          );
         }
       } catch (e) {
         console.error('Meta sync check error:', e);
@@ -348,7 +346,7 @@ export default function DashboardPage() {
     setNotifications((prev) => [newNotif, ...prev]);
   };
 
-  const handlePublishSuccess = (itemId: string, externalUrl?: string) => {
+  const handlePublishSuccess = (itemId: string, externalUrl?: string, isLive?: boolean) => {
     setContentItems((prev) =>
       prev.map((item) => {
         if (item.id === itemId) {
@@ -356,7 +354,7 @@ export default function DashboardPage() {
             ...item,
             status: 'published',
             publishedAt: new Date().toISOString(),
-            externalUrl: externalUrl || item.externalUrl || 'https://linkedin.com/feed',
+            externalUrl: externalUrl || item.externalUrl || 'https://www.facebook.com/profile.php?id=61551470574335',
             errorMessage: undefined,
           };
         }
@@ -364,13 +362,17 @@ export default function DashboardPage() {
       })
     );
 
-    // Notify user
+    // Notify user with full transparency
     const targetItem = contentItems.find((i) => i.id === itemId);
+    const platformLabel = targetItem?.platform === 'facebook' ? 'IZBA Marketing agency Facebook Page' : (targetItem?.platform?.toUpperCase() || 'Social Channel');
+
     const newNotif: SystemNotification = {
       id: `notif-${Date.now()}`,
-      title: 'Post Published Successfully',
-      message: `"${(targetItem?.title || 'Post').slice(0, 30)}..." published live to official API.`,
-      type: 'success',
+      title: isLive ? `Live Post Published to ${platformLabel}!` : 'Post Saved in Dashboard (Sandbox Mode)',
+      message: isLive
+        ? `"${(targetItem?.title || 'Post').slice(0, 30)}..." is now LIVE on official ${platformLabel}.`
+        : `"${(targetItem?.title || 'Post').slice(0, 30)}..." saved in dashboard. Note: Add Facebook Page Access Token to publish live to external Facebook.`,
+      type: isLive ? 'success' : 'info',
       timestamp: 'Just now',
       read: false,
       platform: targetItem?.platform,

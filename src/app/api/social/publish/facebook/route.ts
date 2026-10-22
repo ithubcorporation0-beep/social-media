@@ -21,7 +21,11 @@ export async function POST(req: NextRequest) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, error: result.error || 'Failed to publish to Facebook Page.' },
+        { 
+          success: false, 
+          error: result.error || 'Failed to publish to Facebook Page.',
+          requiresToken: Boolean(result.requiresToken),
+        },
         { status: 400 }
       );
     }

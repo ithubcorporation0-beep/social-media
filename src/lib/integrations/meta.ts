@@ -38,6 +38,75 @@ export interface StoredMetaAccount {
 // In-memory persistent server vault for Meta integration (persisted across warm serverless requests)
 let serverMetaStore: StoredMetaAccount | null = null;
 
+// Direct Facebook Page token storage (runtime configuration)
+let customPageAccessToken: string | null = null;
+let customPageId: string | null = null;
+
+export function setCustomFacebookPageCredentials(token: string, pageId: string = '61551470574335') {
+  customPageAccessToken = token.trim();
+  customPageId = pageId.trim();
+}
+
+export function clearCustomFacebookCredentials() {
+  customPageAccessToken = null;
+  customPageId = null;
+}
+
+export function getEffectiveFacebookCredentials(): {
+  pageId: string;
+  pageToken: string;
+  hasToken: boolean;
+  tokenSource: 'runtime' | 'env' | 'oauth' | 'none';
+} {
+  const pageId =
+    customPageId ||
+    process.env.FACEBOOK_PAGE_ID ||
+    serverMetaStore?.page_id ||
+    '61551470574335';
+
+  if (customPageAccessToken && customPageAccessToken.length > 10) {
+    return {
+      pageId,
+      pageToken: customPageAccessToken,
+      hasToken: true,
+      tokenSource: 'runtime',
+    };
+  }
+
+  const envToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN?.trim();
+  if (envToken && envToken.length > 10) {
+    return {
+      pageId,
+      pageToken: envToken,
+      hasToken: true,
+      tokenSource: 'env',
+    };
+  }
+
+  if (serverMetaStore?.status === 'connected' && serverMetaStore.encrypted_access_token) {
+    try {
+      const dec = decryptToken(serverMetaStore.encrypted_access_token);
+      if (dec && dec.length > 10) {
+        return {
+          pageId,
+          pageToken: dec,
+          hasToken: true,
+          tokenSource: 'oauth',
+        };
+      }
+    } catch {
+      // decryption failed
+    }
+  }
+
+  return {
+    pageId,
+    pageToken: '',
+    hasToken: false,
+    tokenSource: 'none',
+  };
+}
+
 export function getMetaOAuthConfig(origin: string = 'http://localhost:3000'): MetaOAuthConfig {
   const appId = process.env.META_APP_ID || '';
   const appSecret = process.env.META_APP_SECRET || '';
@@ -176,19 +245,25 @@ export async function exchangeCodeForMetaToken(code: string, origin: string): Pr
 /**
  * Publishes a post or photo to the connected Facebook Page.
  */
-export async function publishToFacebookPage(body: string, mediaUrl?: string): Promise<{ success: boolean; postId?: string; postUrl?: string; error?: string }> {
-  if (!serverMetaStore || serverMetaStore.status !== 'connected' || !serverMetaStore.page_id) {
-    return { success: false, error: 'Facebook Page is not connected. Please connect via OAuth first.' };
-  }
+export async function publishToFacebookPage(
+  body: string, 
+  mediaUrl?: string
+): Promise<{ 
+  success: boolean; 
+  postId?: string; 
+  postUrl?: string; 
+  error?: string;
+  requiresToken?: boolean;
+}> {
+  const { pageId, pageToken, hasToken } = getEffectiveFacebookCredentials();
 
-  let pageToken: string;
-  try {
-    pageToken = decryptToken(serverMetaStore.encrypted_access_token);
-  } catch (err: any) {
-    return { success: false, error: 'Failed to decrypt Facebook Page credentials.' };
+  if (!hasToken) {
+    return { 
+      success: false, 
+      requiresToken: true,
+      error: 'No Facebook Page Access Token configured. Facebook requires an access token with "pages_manage_posts" permission for "IZBA Marketing agency" (Page ID: 61551470574335).' 
+    };
   }
-
-  const pageId = serverMetaStore.page_id;
 
   try {
     let endpoint = `https://graph.facebook.com/v19.0/${pageId}/feed`;
@@ -212,16 +287,24 @@ export async function publishToFacebookPage(body: string, mediaUrl?: string): Pr
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
     if (!res.ok || data.error) {
-      return { success: false, error: data.error?.message || `Facebook API error (HTTP ${res.status})` };
+      const fbMsg = data.error?.message || `Facebook API error (HTTP ${res.status})`;
+      const fbCode = data.error?.code ? ` (Code: ${data.error.code})` : '';
+      return { 
+        success: false, 
+        error: `${fbMsg}${fbCode}` 
+      };
     }
 
     const postId = data.id || data.post_id;
+    const postNumericId = postId?.includes('_') ? postId.split('_')[1] : postId;
+    const postUrl = `https://www.facebook.com/${pageId}/posts/${postNumericId}`;
+
     return {
       success: true,
       postId,
-      postUrl: `https://www.facebook.com/${postId}`,
+      postUrl,
     };
   } catch (err: any) {
     return { success: false, error: err.message || 'Network error publishing to Facebook Page' };
@@ -229,39 +312,69 @@ export async function publishToFacebookPage(body: string, mediaUrl?: string): Pr
 }
 
 export function inspectMetaHealth() {
-  if (!serverMetaStore) {
+  const { pageId, hasToken, tokenSource } = getEffectiveFacebookCredentials();
+
+  if (hasToken) {
     return {
-      connected: false,
-      status: 'disconnected',
-      message: 'No Meta account connected.',
+      connected: true,
+      status: 'connected',
+      hasToken: true,
+      tokenSource,
+      pageId,
+      account: {
+        id: 'acc-facebook',
+        platform: 'facebook',
+        name: 'IZBA Marketing agency',
+        handle: `@page_${pageId}`,
+        accountType: 'page',
+        status: 'connected',
+        pageId,
+        avatar_url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=120&auto=format&fit=crop&q=80',
+      },
+      scopes: ['pages_manage_posts', 'pages_read_engagement', 'pages_show_list'],
+      tokenVaultStatus: tokenSource === 'oauth' ? 'AES-256-GCM Vault' : `Page Access Token (${tokenSource.toUpperCase()})`,
+      isSandbox: false,
     };
   }
 
-  let tokenHealthy = false;
-  try {
-    const dec = decryptToken(serverMetaStore.encrypted_access_token);
-    tokenHealthy = Boolean(dec && dec.length > 10);
-  } catch {
-    tokenHealthy = false;
+  if (serverMetaStore) {
+    let tokenHealthy = false;
+    try {
+      const dec = decryptToken(serverMetaStore.encrypted_access_token);
+      tokenHealthy = Boolean(dec && dec.length > 10);
+    } catch {
+      tokenHealthy = false;
+    }
+
+    return {
+      connected: serverMetaStore.status === 'connected',
+      status: serverMetaStore.status,
+      hasToken: tokenHealthy,
+      pageId: serverMetaStore.page_id,
+      account: {
+        ...sanitizeAccountForClient(serverMetaStore),
+        pageId: serverMetaStore.page_id,
+        availablePages: serverMetaStore.available_pages,
+      },
+      scopes: serverMetaStore.scopes,
+      tokenVaultStatus: tokenHealthy ? 'AES-256-GCM Verified' : 'Corrupted',
+      tokenExpiresAt: serverMetaStore.token_expires_at,
+      isExpiringSoon: isTokenExpiringSoon(serverMetaStore.token_expires_at, 60),
+      isSandbox: Boolean(serverMetaStore.is_sandbox),
+    };
   }
 
   return {
-    connected: serverMetaStore.status === 'connected',
-    status: serverMetaStore.status,
-    account: {
-      ...sanitizeAccountForClient(serverMetaStore),
-      pageId: serverMetaStore.page_id,
-      availablePages: serverMetaStore.available_pages,
-    },
-    scopes: serverMetaStore.scopes,
-    tokenVaultStatus: tokenHealthy ? 'AES-256-GCM Verified' : 'Corrupted',
-    tokenExpiresAt: serverMetaStore.token_expires_at,
-    isExpiringSoon: isTokenExpiringSoon(serverMetaStore.token_expires_at, 60),
-    isSandbox: Boolean(serverMetaStore.is_sandbox),
+    connected: false,
+    status: 'disconnected',
+    hasToken: false,
+    pageId: '61551470574335',
+    message: 'Facebook Page Access Token not configured. Add FACEBOOK_PAGE_ACCESS_TOKEN or connect via OAuth to publish live.',
   };
 }
 
 export function disconnectMetaAccount(): boolean {
+  clearCustomFacebookCredentials();
   if (!serverMetaStore) return false;
   serverMetaStore = null;
   return true;
