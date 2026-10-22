@@ -402,23 +402,40 @@ export default function ConnectAccountModal({
                 <span>Disconnect & Revoke</span>
               </button>
             ) : (
-              <button
-                onClick={handleInitiateOAuth}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/20 disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Executing Handshake...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Connect Official OAuth</span>
-                  </>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onToggleConnection(account.id, {
+                      status: 'connected',
+                      handle: account.handle || '@connected_sandbox',
+                      connectedAt: new Date().toISOString(),
+                    });
+                    onClose();
+                  }}
+                  className="px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-white/10 transition-colors"
+                  title="Enable sandbox mode to test post scheduling and UI without live Meta credentials"
+                >
+                  Enable Sandbox Mode
+                </button>
+                <button
+                  onClick={handleInitiateOAuth}
+                  disabled={isLoading}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-blue-500/20 disabled:opacity-50"
+                >
+                  {isLoading ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Executing Handshake...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Connect Official OAuth</span>
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </div>
         </div>
