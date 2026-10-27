@@ -42,9 +42,21 @@ export default function ConnectAccountModal({
   const [isSavingFbToken, setIsSavingFbToken] = useState(false);
   const [fbTokenStatus, setFbTokenStatus] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Custom Profile Handle & Name state
+  const [customHandleInput, setCustomHandleInput] = useState('');
+  const [customNameInput, setCustomNameInput] = useState('');
+
   // Fetch live backend status when opened
   useEffect(() => {
     if (isOpen && account) {
+      setCustomNameInput(account.name);
+      setCustomHandleInput(
+        account.handle.startsWith('@not-connected') || 
+        account.handle.startsWith('@unlinked') || 
+        account.handle.startsWith('@no-account')
+          ? ''
+          : account.handle
+      );
       if (account.platform === 'linkedin') {
         fetchStatus('/api/auth/linkedin/status');
       } else if (account.platform === 'facebook' || account.platform === 'instagram') {
@@ -60,6 +72,22 @@ export default function ConnectAccountModal({
       setFbTokenInput('');
     }
   }, [isOpen, account?.platform]);
+
+  const handleSaveCustomProfile = () => {
+    if (!account) return;
+    const cleanHandle = customHandleInput.trim();
+    const finalHandle = cleanHandle
+      ? (cleanHandle.startsWith('@') || cleanHandle.startsWith('http') ? cleanHandle : `@${cleanHandle}`)
+      : `@${account.platform}_user`;
+
+    onToggleConnection(account.id, {
+      status: 'connected',
+      name: customNameInput.trim() || account.name,
+      handle: finalHandle,
+      connectedAt: new Date().toISOString(),
+    });
+    onClose();
+  };
 
   const handleSaveFbToken = async () => {
     if (!fbTokenInput.trim()) return;
@@ -225,6 +253,49 @@ export default function ConnectAccountModal({
             className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/5"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Instant Profile Link / Custom Handle */}
+        <div className="p-4 rounded-xl bg-slate-900/90 border border-indigo-500/20 space-y-3 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Link Your Real Profile or Handle:</span>
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              Instant
+            </span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] font-semibold text-slate-400 block mb-1">Account Display Name</label>
+              <input
+                type="text"
+                value={customNameInput}
+                onChange={(e) => setCustomNameInput(e.target.value)}
+                placeholder={account.name}
+                className="w-full bg-slate-950 border border-white/15 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-slate-400 block mb-1">Handle or Profile URL</label>
+              <input
+                type="text"
+                value={customHandleInput}
+                onChange={(e) => setCustomHandleInput(e.target.value)}
+                placeholder="@username or https://..."
+                className="w-full bg-slate-950 border border-white/15 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 font-mono"
+              />
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveCustomProfile}
+            className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md shadow-indigo-600/20"
+          >
+            <Check className="w-3.5 h-3.5" />
+            <span>Save & Connect Profile</span>
           </button>
         </div>
 

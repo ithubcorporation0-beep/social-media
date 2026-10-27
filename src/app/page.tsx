@@ -21,6 +21,14 @@ import AiProviderSettings from '@/components/settings/AiProviderSettings';
 import SecurityCenter from '@/components/security/SecurityCenter';
 import CommandPalette from '@/components/navigation/CommandPalette';
 import AuthModal from '@/components/auth/AuthModal';
+import WorkspaceBanner from '@/components/dashboard/WorkspaceBanner';
+import { 
+  STORAGE_KEYS, 
+  loadStoredData, 
+  saveStoredData, 
+  clearWorkspaceToFresh, 
+  restoreDemoTemplate 
+} from '@/lib/storage';
 import { 
   initialAccounts, 
   initialContentItems, 
@@ -92,6 +100,92 @@ export default function DashboardPage() {
   const [previewItem, setPreviewItem] = useState<ContentItem | null>(null);
   const [editingItem, setEditingItem] = useState<ContentItem | null>(null);
   const [confirmPublishItem, setConfirmPublishItem] = useState<ContentItem | null>(null);
+
+  // Local Persistence & Workspace States
+  const [isHydrated, setIsHydrated] = useState<boolean>(false);
+  const [workspaceMode, setWorkspaceMode] = useState<'demo' | 'custom'>('demo');
+
+  // 1. Hydrate state from localStorage on client mount
+  useEffect(() => {
+    try {
+      const storedContent = loadStoredData<ContentItem[]>(STORAGE_KEYS.CONTENT, initialContentItems);
+      const storedAccounts = loadStoredData<SocialAccount[]>(STORAGE_KEYS.ACCOUNTS, initialAccounts);
+      const storedJobs = loadStoredData<JobApplication[]>(STORAGE_KEYS.JOBS, initialJobApplications);
+      const storedInteractions = loadStoredData<SocialInteraction[]>(STORAGE_KEYS.INTERACTIONS, initialInteractions);
+      const storedNotifs = loadStoredData<SystemNotification[]>(STORAGE_KEYS.NOTIFICATIONS, initialNotifications);
+      const storedAnalytics = loadStoredData<PostAnalyticsItem[]>(STORAGE_KEYS.ANALYTICS, initialAnalyticsItems);
+      const storedAiConfigs = loadStoredData<AiProviderConfig[]>(STORAGE_KEYS.AI_CONFIGS, initialAiConfigs);
+      const storedDefaultAi = loadStoredData<AiProviderId>(STORAGE_KEYS.DEFAULT_AI, 'gemini');
+      const storedUser = loadStoredData(STORAGE_KEYS.CURRENT_USER, currentUser);
+      const storedMode = loadStoredData<'demo' | 'custom'>(STORAGE_KEYS.WORKSPACE_MODE, 'demo');
+
+      setContentItems(storedContent);
+      setAccounts(storedAccounts);
+      setJobApplications(storedJobs);
+      setInteractions(storedInteractions);
+      setNotifications(storedNotifs);
+      setAnalyticsItems(storedAnalytics);
+      setAiConfigs(storedAiConfigs);
+      setDefaultAiProvider(storedDefaultAi);
+      setCurrentUser(storedUser);
+      setWorkspaceMode(storedMode);
+    } catch (e) {
+      console.warn('Failed to hydrate local storage:', e);
+    } finally {
+      setIsHydrated(true);
+    }
+  }, []);
+
+  // 2. Persist state changes to localStorage
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.CONTENT, contentItems);
+  }, [contentItems, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.ACCOUNTS, accounts);
+  }, [accounts, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.JOBS, jobApplications);
+  }, [jobApplications, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.INTERACTIONS, interactions);
+  }, [interactions, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.NOTIFICATIONS, notifications);
+  }, [notifications, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.ANALYTICS, analyticsItems);
+  }, [analyticsItems, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.AI_CONFIGS, aiConfigs);
+  }, [aiConfigs, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.DEFAULT_AI, defaultAiProvider);
+  }, [defaultAiProvider, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.CURRENT_USER, currentUser);
+  }, [currentUser, isHydrated]);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    saveStoredData(STORAGE_KEYS.WORKSPACE_MODE, workspaceMode);
+  }, [workspaceMode, isHydrated]);
 
   // Global keyboard shortcuts (Ctrl+K / Cmd+K to open Command Palette)
   useEffect(() => {
@@ -455,6 +549,89 @@ export default function DashboardPage() {
     setSelectedPlatform('all');
   };
 
+  // Workspace Actions (Clean slate vs Template vs Backup)
+  const handleClearToFresh = () => {
+    setContentItems([]);
+    setJobApplications([]);
+    setInteractions([]);
+    const freshNotif: SystemNotification = {
+      id: `notif-fresh-${Date.now()}`,
+      title: 'Clean Workspace Activated',
+      message: 'All demo items cleared. Any new posts, jobs, or accounts you add will be permanently saved to your device.',
+      type: 'success',
+      timestamp: 'Just now',
+      read: false,
+    };
+    setNotifications([freshNotif]);
+    setWorkspaceMode('custom');
+    clearWorkspaceToFresh();
+  };
+
+  const handleRestoreDemo = () => {
+    setContentItems(initialContentItems);
+    setAccounts(initialAccounts);
+    setJobApplications(initialJobApplications);
+    setInteractions(initialInteractions);
+    setNotifications(initialNotifications);
+    setAnalyticsItems(initialAnalyticsItems);
+    setAiConfigs(initialAiConfigs);
+    setDefaultAiProvider('gemini');
+    setWorkspaceMode('demo');
+    restoreDemoTemplate();
+  };
+
+  const handleExportJson = () => {
+    const backup = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      currentUser,
+      accounts,
+      contentItems,
+      jobApplications,
+      interactions,
+      notifications,
+      analyticsItems,
+      aiConfigs,
+      defaultAiProvider,
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `socialhub-workspace-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImportJson = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const text = e.target?.result as string;
+        const data = JSON.parse(text);
+        if (Array.isArray(data.contentItems)) setContentItems(data.contentItems);
+        if (Array.isArray(data.accounts)) setAccounts(data.accounts);
+        if (Array.isArray(data.jobApplications)) setJobApplications(data.jobApplications);
+        if (Array.isArray(data.interactions)) setInteractions(data.interactions);
+        if (Array.isArray(data.notifications)) setNotifications(data.notifications);
+        if (data.currentUser) setCurrentUser(data.currentUser);
+        setWorkspaceMode('custom');
+        const notif: SystemNotification = {
+          id: `notif-import-${Date.now()}`,
+          title: 'Backup Imported Successfully',
+          message: 'Your exported workspace data has been restored and saved.',
+          type: 'success',
+          timestamp: 'Just now',
+          read: false,
+        };
+        setNotifications((prev) => [notif, ...prev]);
+      } catch (err) {
+        console.error('Import failed:', err);
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#090d16] text-slate-900 dark:text-slate-100 flex flex-col lg:flex-row antialiased selection:bg-indigo-500 selection:text-white transition-colors duration-200">
       {/* Sidebar Navigation */}
@@ -493,6 +670,17 @@ export default function DashboardPage() {
           tabIndex={-1} 
           className="flex-1 p-4 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto w-full focus:outline-none"
         >
+          {/* Permanent Local Workspace Status & Quick Controls */}
+          <WorkspaceBanner
+            isCustomWorkspace={workspaceMode === 'custom' || contentItems.length !== initialContentItems.length}
+            onClearToFresh={handleClearToFresh}
+            onRestoreDemo={handleRestoreDemo}
+            onExportJson={handleExportJson}
+            onImportJson={handleImportJson}
+            totalSavedPosts={contentItems.length}
+            totalSavedJobs={jobApplications.length}
+          />
+
           {/* Top Quick Stats Ribbon */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
             <button
